@@ -44,7 +44,7 @@ export interface BattleInit {
   level: number;
   /** Modo ginásio: sequência de 1x1 contra o time do líder (sem fuga nem captura). */
   gym?: GymInit;
-  /** Modo guardião lendário: um só adversário, em fases, sem fuga nem captura. */
+  /** Modo guardião lendário: um só adversário, em fases, sem captura (a fuga sempre funciona). */
   legend?: LegendInit;
 }
 
@@ -273,7 +273,7 @@ export class BattleScene extends Phaser.Scene {
           <span>Derrote todo o time de ${esc(this.gym.leader)}. Não há captura nem fuga.</span>`
             : this.legend
             ? `<b>Guardião do folclore</b>
-          <span>${esc(this.legend.legend.name)} muda de jeito ao perder vigor. Não há captura nem fuga.</span>`
+          <span>${esc(this.legend.legend.name)} muda de jeito ao perder vigor. Não há captura; dá para fugir.</span>`
             : `<b>Animal de grande porte</b>
           <span>Leve o vigor de ${esc(sp.name)} a zero para atordoá-lo. Só então dá para tentar a captura.</span>`
         }
@@ -291,7 +291,7 @@ export class BattleScene extends Phaser.Scene {
             <div class="bt-moves"></div>
             <div class="bt-side">
               <button type="button" class="bt-btn bt-swap" data-act="team">Trocar</button>
-              ${this.gym || this.legend ? '' : '<button type="button" class="bt-btn bt-run" data-act="flee">Fugir</button>'}
+              ${this.gym ? '' : '<button type="button" class="bt-btn bt-run" data-act="flee">Fugir</button>'}
             </div>
           </div>
           <div class="bt-team"></div>
@@ -394,7 +394,7 @@ export class BattleScene extends Phaser.Scene {
         if (this.phase === 'menu') this.choose({ kind: 'move', index: i });
         break;
       case 'flee':
-        if (this.phase === 'menu' && !this.gym && !this.legend) this.choose({ kind: 'flee' });
+        if (this.phase === 'menu' && !this.gym) this.choose({ kind: 'flee' });
         break;
       case 'team':
         if (this.phase === 'menu') {
@@ -516,6 +516,11 @@ export class BattleScene extends Phaser.Scene {
     const wild = this.wild;
 
     if (choice.kind === 'flee') {
+      if (this.legend) {
+        await this.say(`Você recua. ${this.legend.legend.name} volta a dormir.`, 500);
+        this.finish('ran');
+        return true;
+      }
       if (rng() < fleeChance(me, wild, this.fleeFails)) {
         await this.say('Você se afasta com cuidado.', 500);
         this.finish('ran');
@@ -625,7 +630,7 @@ export class BattleScene extends Phaser.Scene {
     const ph = l.phases[idx];
     const info = MECHANIC_INFO[ph.mechanic];
     const note = this.root.querySelector('.bt-note > span:not(.bt-pin)');
-    if (note) note.textContent = `${info.name}: ${info.text}. Não há captura nem fuga.`;
+    if (note) note.textContent = `${info.name}: ${info.text}. Não há captura; dá para fugir.`;
     if (prefix) await this.say(`${l.name}: "${prefix}"`, 900);
     await this.say(`${l.name}: "${ph.line}"`, 800);
     await this.say(`${info.name}: ${info.text}!`, 600);

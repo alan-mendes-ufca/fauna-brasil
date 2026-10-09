@@ -45,7 +45,7 @@ flowchart TD
 - `BootScene` pinta todas as texturas e decide a primeira cena (inclusive os atalhos de URL de desenvolvimento).
 - `OverworldScene` é reiniciada a cada mudança de região (`{ region: id }`). Ao pisar numa saída, há um fade e a cena abre a região de destino.
 - `Battle` e `Capture` são executadas por cima da exploração (`game.scene.run`), que fica congelada até o fim do encontro. O fluxo está em `src/battle/flow.ts` (`beginEncounter`).
-- Ginásio e guardião também usam a `BattleScene`, em modos próprios, sem captura nem fuga. O ginásio é iniciado por `beginGym` (`src/battle/gym.ts`), chamado por `OverworldScene.startGym` ao clicar em "Desafiar" no painel do líder. O guardião é iniciado por `beginLegend` (`src/battle/legendFlow.ts`) logo depois de uma captura que o desperta (`OverworldScene.startCapture`, ~0,9 s depois do fim da captura).
+- Ginásio e guardião também usam a `BattleScene`, em modos próprios. O ginásio não tem captura nem fuga; no guardião não há captura, mas a fuga sempre funciona. O ginásio é iniciado por `beginGym` (`src/battle/gym.ts`), chamado por `OverworldScene.startGym` ao clicar em "Desafiar" no painel do líder. O guardião é iniciado por `beginLegend` (`src/battle/legendFlow.ts`) logo depois de uma captura que o desperta (`OverworldScene.startCapture`, ~0,9 s depois do fim da captura).
 - Painéis HTML abertos (caderno, loja, mochila) pausam a exploração (`setUiModal` em `main.ts`).
 
 ## Eventos de `game.events`
@@ -61,12 +61,12 @@ flowchart TD
 | `encounter-end` | `battle/flow.ts` | `{ speciesId, habitat, level, result }` | `OverworldScene`, `party`, `bag`, `conservation` |
 | `coins-earned` | `bindBag` | `{ amount }` | `ui/village.ts` |
 | `gym-end` | `battle/gym.ts` | `{ regionId, result }` (`won` ou `lost`), emitido uma vez | `OverworldScene.startGym`, `BootScene` (`?gym=`) |
-| `legend-end` | `battle/legendFlow.ts` | `{ legendId, result }` (`won` ou `lost`), emitido uma vez | `OverworldScene.startLegend`, `BootScene` (`?legend=`) |
+| `legend-end` | `battle/legendFlow.ts` | `{ legendId, result }` (`won`, `lost` ou `fled`), emitido uma vez | `OverworldScene.startLegend`, `BootScene` (`?legend=`) |
 | `dna-collected` | `bindConservation` (`state/conservation.ts`) | `{ speciesId, amount }` | `GameUI` (`onDna`) |
 
 `encounter-end` é emitido exatamente uma vez por encontro, com `result` igual a `captured`, `fled`, `ran` ou `lost`. O contrato completo está no comentário de `src/battle/flow.ts`.
 
-Ginásio e guardião não passam por `encounter-end`: cada um tem o seu fim (`gym-end` e `legend-end`), com `won` ou `lost`. A `BattleScene` emite `battle-done` ao terminar a luta, e `battle/gym.ts` e `battle/legendFlow.ts` escutam esse evento; cada fluxo se desliga depois de receber o seu.
+Ginásio e guardião não passam por `encounter-end`: cada um tem o seu fim (`gym-end` e `legend-end`), com `won` ou `lost` (o guardião também pode terminar com `fled`). A `BattleScene` emite `battle-done` ao terminar a luta, e `battle/gym.ts` e `battle/legendFlow.ts` escutam esse evento; cada fluxo se desliga depois de receber o seu.
 
 ## Estado salvo
 

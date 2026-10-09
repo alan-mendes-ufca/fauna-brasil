@@ -8,13 +8,15 @@ import { party } from '../state/party';
 
 // FLUXO DA BATALHA DE GUARDIÃO LENDÁRIO
 // A exploração congela, chama beginLegend() e volta ao receber 'legend-end' (emitido exatamente uma vez).
-// A BattleScene luta em modo guardião (ver BattleInit.legend): um só adversário, em fases, sem captura nem fuga.
+// A BattleScene luta em modo guardião (ver BattleInit.legend): um só adversário, em fases, sem captura. A fuga sempre funciona.
 //
-//   'won'  -> recompensa (moedas, item, título; o XP é dado pela própria batalha) | 'lost' -> o guardião volta a dormir
+//   'won'   -> recompensa (moedas, item, título; o XP é dado pela própria batalha)
+//   'lost'  -> o guardião volta a dormir
+//   'fled'  -> o guardião volta a dormir (sem recompensa e sem marcar vitória)
 //
 // Eventos: 'legend-end' { legendId, result }; 'coins-earned' { amount } quando há moedas.
 
-export type LegendEndResult = 'won' | 'lost';
+export type LegendEndResult = 'won' | 'lost' | 'fled';
 
 export interface LegendEnd {
   legendId: string;
@@ -51,10 +53,10 @@ export function beginLegend(game: Phaser.Game, legendId: string): void {
   };
   const onBattle = ({ result }: { result: string }) => {
     teardown();
-    const won = result === 'won';
-    // Vitória: quem caiu volta com um pouco de vigor; derrota: o time descansa por inteiro (regras do party).
-    party.onEncounterEnd({ speciesId: legend.baseSpecies, result: won ? 'ran' : 'lost' });
-    game.events.emit('legend-end', { legendId, result: won ? 'won' : 'lost' } satisfies LegendEnd);
+    // Vitória ou fuga: quem caiu volta com um pouco de vigor; derrota: o time descansa por inteiro (regras do party).
+    const outcome: LegendEndResult = result === 'won' ? 'won' : result === 'ran' ? 'fled' : 'lost';
+    party.onEncounterEnd({ speciesId: legend.baseSpecies, result: outcome === 'lost' ? 'lost' : 'ran' });
+    game.events.emit('legend-end', { legendId, result: outcome } satisfies LegendEnd);
   };
   current = teardown;
   game.events.on('battle-done', onBattle);
