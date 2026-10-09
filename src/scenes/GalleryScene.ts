@@ -192,7 +192,7 @@ export class GalleryScene extends Phaser.Scene {
     const scale = 3;
     let x = 12;
     let rowTop = y;
-    let rowH = 0;
+    let rowH: number;
     const rows: { type: string; x: number }[][] = [[]];
     // agrupa em linhas para não passar da largura da tela
     for (const [type, s] of items) {
