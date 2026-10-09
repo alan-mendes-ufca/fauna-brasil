@@ -39,6 +39,11 @@ const LOOKS: Record<NpcLook, Partial<Record<string, string>>> = {
     H: '#4a6a2a', h: '#6a8a3a', g: '#2a4a1a', b: '#d8a020', s: '#7a4a2a', S: '#5a3018', n: '#9a6a42',
     ...SHIRT('#8a7a42', '#aa9a5a', '#5a4e24', '#c8b878'), p: '#5a4e24', P: '#3a3214', q: '#7a6a3a',
   },
+  // bióloga: jaleco claro sobre calça de campo, boné verde-musgo e cabelo preso
+  biologa: {
+    H: '#5a7a4a', h: '#7a9a62', g: '#3a5430', b: '#2a8a6a', c: '#3a2418', C: '#5a3a28', s: '#c08458', S: '#9a6238', n: '#d89c70',
+    ...SHIRT('#f4f6f2', '#ffffff', '#c4ccc4', '#dfe6df'), p: '#6a5a3a', P: '#4a3e26', q: '#8a7a56',
+  },
 };
 
 export const NPC_LOOKS = Object.keys(LOOKS) as NpcLook[];

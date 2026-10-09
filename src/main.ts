@@ -10,6 +10,7 @@ import { OverworldScene } from './scenes/OverworldScene';
 import { StarterScene } from './scenes/StarterScene';
 import { bindParty } from './state/party';
 import { bindBag } from './state/bag';
+import { bindConservation } from './state/conservation';
 import { Minimap } from './ui/minimap';
 import { GameUI, type Crop } from './ui/GameUI';
 import { VillageUI } from './ui/village';
@@ -34,6 +35,8 @@ const game = new Phaser.Game({
 bindParty(game.events);
 // Moedas ganhas nas capturas (e gastas nas lojas das vilas).
 bindBag(game.events);
+// DNA coletado nas capturas de espécies ameaçadas (Centro de Conservação das vilas).
+bindConservation(game.events);
 
 /** Cenas de tela cheia com HUD próprio (captura, batalha, escolha do inicial): o HUD do caderno some. */
 const fullScreenScene = () => ['Capture', 'Battle', 'Starter'].some((key) => game.scene.isActive(key));
@@ -84,7 +87,7 @@ const ui = new GameUI(
 // Moedas, diálogo com moradores, loja e mochila das vilas.
 const village = new VillageUI(
   document.getElementById('ui')!,
-  { onModal: setUiModal, isFullScreen: fullScreenScene },
+  { onModal: setUiModal, isFullScreen: fullScreenScene, speciesArt: (id) => art(`animal_${id}`, { x: 0, y: 0, w: 64, h: 64 }) },
   game.events,
 );
 
