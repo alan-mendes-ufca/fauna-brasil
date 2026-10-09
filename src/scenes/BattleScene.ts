@@ -16,8 +16,20 @@ import {
   type Combatant,
   type Step,
 } from '../battle/engine';
+import {
+  MECHANIC_INFO,
+  attacksPerTurn,
+  crossedPhases,
+  damageDealtMult,
+  damageTakenMult,
+  healPerTurn,
+  legendMaxHp,
+  playerMisses,
+  scaleDamage,
+} from '../battle/legend';
 import { STAT_NAMES, esc, fitStage, hpClass, spriteUrl, typeChip, typeChips } from '../battle/ui';
 import { TYPE_INFO, type Move } from '../data/battle';
+import type { Legend } from '../data/legends';
 import { getSpecies, type Habitat, type Species } from '../data/species';
 import { party, type Member } from '../state/party';
 
@@ -32,6 +44,14 @@ export interface BattleInit {
   level: number;
   /** Modo ginásio: sequência de 1x1 contra o time do líder (sem fuga nem captura). */
   gym?: GymInit;
+  /** Modo guardião lendário: um só adversário, em fases, sem fuga nem captura. */
+  legend?: LegendInit;
+}
+
+export interface LegendInit {
+  legend: Legend;
+  /** Aplica a recompensa (moedas, item, título) e devolve a mensagem final. O XP é dado pela batalha. */
+  onWin(): string;
 }
 
 export interface GymInit {
@@ -74,6 +94,8 @@ export class BattleScene extends Phaser.Scene {
   private participants = new Set<string>();
   private fleeFails = 0;
   private gym: GymInit | null = null;
+  private legend: LegendInit | null = null;
+  private legendPhase = 0;
   private finished = false;
   private phase: Phase = 'busy';
   private pending: ((c: Choice) => void) | null = null;
@@ -106,6 +128,8 @@ export class BattleScene extends Phaser.Scene {
     this.pendingSwitch = null;
     this.fleeFails = 0;
     this.gym = data.gym ?? null;
+    this.legend = data.legend ?? null;
+    this.legendPhase = 0;
     this.active = 0;
     this.participants = new Set();
     this.stars = [];
@@ -119,6 +143,11 @@ export class BattleScene extends Phaser.Scene {
     this.team = this.members.map((m) => makeCombatant(m.speciesId, m.level, 'player', m.uid, m.hp));
     this.active = Math.max(0, this.team.findIndex((c) => c.hp > 0));
     this.wild = makeCombatant(this.species.id, this.wildLevel, 'wild', 'wild');
+    if (this.legend) {
+      this.wild.name = this.legend.legend.name;
+      this.wild.maxHp = legendMaxHp(this.legend.legend, this.wild.maxHp);
+      this.wild.hp = this.wild.maxHp;
+    }
 
     const cam = this.cameras.main;
     cam.setZoom(ZOOM).centerOn(CAP_W / 2, CAP_H / 2).setBackgroundColor('#04302f').fadeIn(300, 4, 16, 15);
@@ -162,6 +191,7 @@ export class BattleScene extends Phaser.Scene {
     }
     this.wildActor = this.makeActor(this.species.id, WILD_POS.x, WILD_POS.y, 1, false);
     this.wildActor.spr.play(animalAnim(this.species.id, 'idle'));
+    if (this.legend) this.dressLegend(this.wildActor, this.legend.legend.tint);
     this.myActor = this.makeActor(this.team[this.active].speciesId, PLAYER_POS.x, PLAYER_POS.y, PLAYER_SCALE, true);
     this.myActor.spr.play(animalAnim(this.team[this.active].speciesId, 'idle'));
   }
@@ -174,6 +204,14 @@ export class BattleScene extends Phaser.Scene {
     // Clarão do golpe: cópia somada por cima (o renderizador Canvas não tem tint).
     const glow = mk(DEPTH.glow).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0);
     return { spr, glow, shadow, x, y, scale, flip };
+  }
+
+  /** Guardião lendário: o corpo-base ganha o tint do guardião e uma aura pulsante no chão. */
+  private dressLegend(a: Actor, tint: number): void {
+    a.spr.setTint(tint);
+    a.glow.setTint(tint);
+    const aura = this.add.image(a.x, a.y + 1, 'cap_shadow').setDepth(DEPTH.shadow + 0.5).setScale(a.scale * 2.2, a.scale * 1.6).setTint(tint).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.5);
+    this.tweens.add({ targets: aura, alpha: 0.12, scaleX: a.scale * 2.6, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   }
 
   private setActorSpecies(a: Actor, id: string): void {
@@ -233,6 +271,9 @@ export class BattleScene extends Phaser.Scene {
           this.gym
             ? `<b>Ginásio</b>
           <span>Derrote todo o time de ${esc(this.gym.leader)}. Não há captura nem fuga.</span>`
+            : this.legend
+            ? `<b>Guardião do folclore</b>
+          <span>${esc(this.legend.legend.name)} muda de jeito ao perder vigor. Não há captura nem fuga.</span>`
             : `<b>Animal de grande porte</b>
           <span>Leve o vigor de ${esc(sp.name)} a zero para atordoá-lo. Só então dá para tentar a captura.</span>`
         }
@@ -250,7 +291,7 @@ export class BattleScene extends Phaser.Scene {
             <div class="bt-moves"></div>
             <div class="bt-side">
               <button type="button" class="bt-btn bt-swap" data-act="team">Trocar</button>
-              ${this.gym ? '' : '<button type="button" class="bt-btn bt-run" data-act="flee">Fugir</button>'}
+              ${this.gym || this.legend ? '' : '<button type="button" class="bt-btn bt-run" data-act="flee">Fugir</button>'}
             </div>
           </div>
           <div class="bt-team"></div>
@@ -353,7 +394,7 @@ export class BattleScene extends Phaser.Scene {
         if (this.phase === 'menu') this.choose({ kind: 'move', index: i });
         break;
       case 'flee':
-        if (this.phase === 'menu' && !this.gym) this.choose({ kind: 'flee' });
+        if (this.phase === 'menu' && !this.gym && !this.legend) this.choose({ kind: 'flee' });
         break;
       case 'team':
         if (this.phase === 'menu') {
@@ -445,7 +486,14 @@ export class BattleScene extends Phaser.Scene {
     me.glow.setAlpha(0);
     this.nudge(w, 120, 0);
     this.nudge(me, -80, 0);
-    await this.say(this.gym ? `${this.gym.leader} desafia você com ${this.wild.name}!` : `${this.wild.name} selvagem bloqueia o caminho!`, 500);
+    await this.say(
+      this.gym
+        ? `${this.gym.leader} desafia você com ${this.wild.name}!`
+        : this.legend
+          ? `${this.legend.legend.name} desperta!`
+          : `${this.wild.name} selvagem bloqueia o caminho!`,
+      500,
+    );
     await this.anim(380, (t) => this.nudge(w, 120 * (1 - t), 0), 'Quad.easeOut');
     this.renderPlate('wild');
     await this.say(`Vai, ${this.me.name}!`, 220);
@@ -454,6 +502,7 @@ export class BattleScene extends Phaser.Scene {
     await this.anim(350, (t) => this.nudge(me, -80 * (1 - t), 0), 'Quad.easeOut');
     this.renderPlate('mine');
     this.renderMoves();
+    if (this.legend) await this.announcePhase(0, this.legend.legend.intro);
     while (true) {
       const choice = await this.ask();
       if (await this.round(choice)) return;
@@ -496,26 +545,115 @@ export class BattleScene extends Phaser.Scene {
     return done === 'end';
   }
 
-  /** Uma ação: golpe (ou perda de vez) e o que vem depois (fim da batalha, exaustão, troca forçada). */
+  /** Uma ação do turno; o guardião lendário pode ainda atacar de novo e se regenerar (ver `legendExtras`). */
   private async turnOf(att: Combatant, def: Combatant, move: Move): Promise<'continue' | 'end' | 'swap'> {
+    const r = await this.singleTurn(att, def, move);
+    if (!this.legend || att.side !== 'wild' || r !== 'continue') return r;
+    return this.legendExtras(att, def);
+  }
+
+  /** Uma ação: golpe (ou perda de vez) e o que vem depois (fim da batalha, exaustão, troca forçada). */
+  private async singleTurn(att: Combatant, def: Combatant, move: Move): Promise<'continue' | 'end' | 'swap'> {
     if (consumeDaze(att)) {
       await this.say(`${att.name} está paralisado de susto e perde a vez!`);
       return 'continue';
     }
     await this.say(`${att.name} usou ${move.name}!`, 180);
-    const steps = useMove(att, def, move, Math.random);
+    const steps = this.legend ? this.legendMove(att, def, move) : useMove(att, def, move, Math.random);
     await this.play(att, def, move, steps);
     this.syncMembers();
     if (this.wild.hp <= 0) {
+      if (this.legend) {
+        await this.onLegendDown();
+        return 'end';
+      }
       if (this.gym) return (await this.onGymFoeDown()) ? 'end' : 'swap';
       await this.onStunned();
       return 'end';
     }
+    if (this.legend) await this.checkPhase();
     if (this.me.hp <= 0) {
       await this.onExhausted();
       return this.finished ? 'end' : 'swap';
     }
     return 'continue';
+  }
+
+  // ------------------------------------------------------------------ guardião lendário (regras em battle/legend.ts)
+
+  private get mechanic() {
+    return this.legend!.legend.phases[this.legendPhase].mechanic;
+  }
+
+  /** Golpe com os modificadores da fase: confusão faz o jogador errar, fúria e escudo reescalam o dano. */
+  private legendMove(att: Combatant, def: Combatant, move: Move): Step[] {
+    const mech = this.mechanic;
+    if (att.side === 'player' && move.power > 0 && playerMisses(mech, Math.random)) return [{ kind: 'miss' }];
+    const before = def.hp;
+    const steps = useMove(att, def, move, Math.random);
+    const mult = att.side === 'wild' ? damageDealtMult(mech) : damageTakenMult(mech);
+    const hit = steps.find((s): s is Extract<Step, { kind: 'hit' }> => s.kind === 'hit');
+    if (hit && mult !== 1) {
+      const dmg = scaleDamage(hit.damage, mult, before);
+      def.hp = before - dmg;
+      hit.damage = dmg;
+    }
+    return steps;
+  }
+
+  /** Fim da ação do guardião: ataques extras da investida e regeneração por turno. */
+  private async legendExtras(att: Combatant, def: Combatant): Promise<'continue' | 'end' | 'swap'> {
+    for (let i = 1; i < attacksPerTurn(this.mechanic); i++) {
+      await this.say(`${att.name} ataca de novo!`, 200);
+      const r = await this.singleTurn(att, def, pickWildMove(att, def, Math.random));
+      if (r !== 'continue') return r;
+    }
+    const heal = healPerTurn(this.mechanic, att.hp, att.maxHp);
+    if (heal > 0) {
+      att.hp += heal;
+      this.renderBar('wild');
+      this.floatText(this.wildActor.x, this.wildActor.y - 50, `+${heal}`, '#9dff7a');
+      await this.say(`${att.name} se regenera!`);
+    }
+    return 'continue';
+  }
+
+  /** Mostra a fala da fase `idx` e o que ela muda na luta. */
+  private async announcePhase(idx: number, prefix?: string): Promise<void> {
+    const l = this.legend!.legend;
+    this.legendPhase = idx;
+    const ph = l.phases[idx];
+    const info = MECHANIC_INFO[ph.mechanic];
+    const note = this.root.querySelector('.bt-note > span:not(.bt-pin)');
+    if (note) note.textContent = `${info.name}: ${info.text}. Não há captura nem fuga.`;
+    if (prefix) await this.say(`${l.name}: "${prefix}"`, 900);
+    await this.say(`${l.name}: "${ph.line}"`, 800);
+    await this.say(`${info.name}: ${info.text}!`, 600);
+  }
+
+  /** O vigor do guardião cruzou um limiar: fala nova e mecânica nova. */
+  private async checkPhase(): Promise<void> {
+    if (this.wild.hp <= 0) return;
+    const l = this.legend!.legend;
+    for (const idx of crossedPhases(l, this.legendPhase, this.wild.hp / this.wild.maxHp)) {
+      this.cameras.main.flash(180, 255, 240, 200);
+      await this.announcePhase(idx);
+    }
+  }
+
+  /** Guardião vencido: some, fala a última fala, dá XP ao time e entrega a recompensa. */
+  private async onLegendDown(): Promise<void> {
+    const { legend, onWin } = this.legend!;
+    const w = this.wildActor;
+    this.renderPlate('wild');
+    await this.anim(600, (t) => {
+      this.setActorAlpha(w, 1 - t);
+      this.nudge(w, 0, 18 * t);
+    });
+    await this.say(`${legend.name}: "${legend.defeatLine}"`, 1000);
+    await this.awardXp(legend.reward.xp);
+    await this.say(onWin(), 1600);
+    this.finish('won');
   }
 
   private actorOf(c: Combatant): Actor {
@@ -827,8 +965,8 @@ export class BattleScene extends Phaser.Scene {
     return false;
   }
 
-  private async awardXp(): Promise<void> {
-    const reward = xpReward(this.species.rarity, this.wildLevel);
+  private async awardXp(amount?: number): Promise<void> {
+    const reward = amount ?? xpReward(this.species.rarity, this.wildLevel);
     for (const m of this.members) {
       if (!this.participants.has(m.uid) || m.hp <= 0) continue;
       const idx = this.members.indexOf(m);

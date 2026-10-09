@@ -12,6 +12,8 @@ import { LightLayer, type SceneLight } from './LightLayer';
 import type { Habitat } from '../data/species';
 import { beginEncounter, type EncounterEnd } from '../battle/flow';
 import { beginGym } from '../battle/gym';
+import { beginLegend } from '../battle/legendFlow';
+import { legends } from '../state/legends';
 import { Fauna, type Animal } from '../world/fauna';
 
 // --- câmera e movimento
@@ -887,8 +889,13 @@ export class OverworldScene extends Phaser.Scene {
     this.setCursor('');
     this.scene.pause();
     this.game.events.once('encounter-end', (end: EncounterEnd) => {
-      this.lightLayer?.setVisible(true);
-      this.scene.resume();
+      // Captura de espécie de peso cultural desperta o guardião do bioma: a exploração segue congelada até a batalha acabar.
+      const awakened = end.result === 'captured' ? legends.awakenedBy(end.speciesId, this.regionId) : undefined;
+      if (awakened) window.setTimeout(() => this.startLegend(awakened.id), 900);
+      else {
+        this.lightLayer?.setVisible(true);
+        this.scene.resume();
+      }
       const now = this.game.loop.time;
       this.engaged = null;
       this.lockUntil = now + AFTER_ENCOUNTER_MS;
@@ -913,6 +920,19 @@ export class OverworldScene extends Phaser.Scene {
       this.lockUntil = this.game.loop.time + AFTER_ENCOUNTER_MS;
     });
     beginGym(this.game, regionId);
+  }
+
+  /** Batalha do guardião lendário: congela a exploração e volta quando ele é vencido ou o time cai. */
+  startLegend(legendId: string): void {
+    this.lightLayer?.setVisible(false);
+    this.setCursor('');
+    if (!this.scene.isPaused()) this.scene.pause(); // ao despertar depois de uma captura, já está pausada
+    this.game.events.once('legend-end', () => {
+      this.lightLayer?.setVisible(true);
+      this.scene.resume();
+      this.lockUntil = this.game.loop.time + AFTER_ENCOUNTER_MS;
+    });
+    beginLegend(this.game, legendId);
   }
 
   // ------------------------------------------------------------------ quadro a quadro
