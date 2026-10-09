@@ -2,7 +2,7 @@
 
 Jogo de exploração e captura da fauna dos seis biomas brasileiros (Amazônia, Caatinga, Cerrado, Pantanal, Mata Atlântica e Pampa), feito com Phaser 4, Vite e TypeScript. Há 72 espécies para encontrar. Toda a arte e a trilha sonora são geradas por código, sem arquivos de imagem ou áudio.
 
-![Escolha do companheiro, batalha e captura](docs/capturas/batalha-grid.png)
+![Batalha, captura e escolha do companheiro](docs/capturas/batalha-grid.png)
 
 Da esquerda para a direita: batalha por turnos, captura com a rede e escolha do companheiro inicial.
 
