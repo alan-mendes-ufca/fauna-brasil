@@ -40,6 +40,8 @@ export function buildGrid(region: Region): Grid {
       }
     }
   }
+  // Moradores das vilas ficam parados no próprio tile.
+  for (const n of region.npcs ?? []) if (n.x >= 0 && n.y >= 0 && n.x < w && n.y < h) blocked[n.y * w + n.x] = 1;
   return { w, h, blocked, brush, water, area: labelAreas(w, h, blocked) };
 }
 

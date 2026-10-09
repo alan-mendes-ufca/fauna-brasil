@@ -1,10 +1,11 @@
 import Phaser from 'phaser';
 import { ENV_MODULES } from '../biomes/env';
 import { paint, rng, TILE } from '../art/canvas';
+import { npcIdleAnim, npcKey } from '../art/npc';
 import { CHAR_H, CHAR_W, EXPLORER_KEY, explorerAnim, type Facing } from '../art/explorer';
 import { PROPS, propKey, tilesetFor, TILE_ANIM_FPS } from '../art/forest';
 import { arrivalOf, exitAt, exitTiles, getRegion } from '../data/regions';
-import type { PropPlacement, Region, RegionExit, TilePos } from '../data/types';
+import type { NpcDef, PropPlacement, Region, RegionExit, TilePos } from '../data/types';
 import { buildGrid, inBounds, isBlocked, nearestWalkable, type Grid } from '../world/grid';
 import { findPath, smoothPath, type Pt } from '../world/pathfind';
 import { LightLayer, type SceneLight } from './LightLayer';
@@ -42,6 +43,9 @@ const REPATH_MS = 350;
 const ENCOUNTER_LOCK_MS = 650;
 /** Depois do encontro, cliques ignorados por um instante (o clique que fechou a captura não vira passo). */
 const AFTER_ENCOUNTER_MS = 350;
+/** Intervalo entre um morador virar e outro (ms). */
+const NPC_TURN_MIN_MS = 3000;
+const NPC_TURN_MAX_MS = 7000;
 const ALERT_RISE = 3;
 
 // --- saídas entre regiões
@@ -111,6 +115,14 @@ for (const m of ENV_MODULES) LEAF_COLORS[m.biome] = m.meta.leafColors;
 const DRY_BIOMES = new Set<string>(['caatinga', ...ENV_MODULES.filter((m) => m.meta.dry).map((m) => m.biome)]);
 const ALERT_ROWS = ['.ooo.', 'oywyo', 'oywyo', 'oyyyo', 'oyyyo', 'oyyyo', '.oyo.', '.ooo.', '.....', '.ooo.', 'oyyyo', '.ooo.'];
 const ALERT_PALETTE = { o: '#10241c', y: '#ffd84a', w: '#fff6c8' };
+
+/** Morador da vila na cena. */
+interface NpcActor {
+  def: NpcDef;
+  sprite: Phaser.GameObjects.Sprite;
+  facing: Facing;
+  nextTurn: number;
+}
 
 interface Canopy {
   img: Phaser.GameObjects.Image;
@@ -203,6 +215,9 @@ export class OverworldScene extends Phaser.Scene {
   private faunaStarted = false;
   /** Animal clicado: o explorador está indo até ele. */
   private target: Animal | null = null;
+  private npcs: NpcActor[] = [];
+  private npcTarget: NpcActor | null = null;
+  private hoveredNpc: NpcActor | null = null;
   private repathAt = 0;
   /** Animal do encontro em andamento. */
   private engaged: Animal | null = null;
@@ -251,6 +266,9 @@ export class OverworldScene extends Phaser.Scene {
     this.alertUntil = 0;
     this.lastCommand = { x: -1, y: -1 };
     this.target = null;
+    this.npcs = [];
+    this.npcTarget = null;
+    this.hoveredNpc = null;
     this.engaged = null;
     this.pressOnAnimal = false;
     this.faunaStarted = false;
@@ -261,6 +279,7 @@ export class OverworldScene extends Phaser.Scene {
     this.buildGround(region);
     this.buildProps(region);
     this.buildPlayer(region);
+    this.buildNpcs(region);
 
     this.hover = this.add.graphics().setDepth(DEPTH_HOVER);
     this.marker = this.add.graphics().setDepth(DEPTH_MARKER);
@@ -395,6 +414,98 @@ export class OverworldScene extends Phaser.Scene {
     this.player = this.add.sprite((start.x + 0.5) * TILE, (start.y + 0.5) * TILE, EXPLORER_KEY).setOrigin(0.5, 1);
     this.playAnim('idle');
     this.lastTile = start;
+  }
+
+  /** Moradores da vila: parados, olhando para onde o mapa mandou (viram de vez em quando). */
+  private buildNpcs(region: Region): void {
+    for (const def of region.npcs ?? []) {
+      const facing = def.facing ?? 'down';
+      const sprite = this.add.sprite((def.x + 0.5) * TILE, (def.y + 0.5) * TILE, npcKey(def.look)).setOrigin(0.5, 1);
+      sprite.setDepth(sprite.y);
+      const npc: NpcActor = { def, sprite, facing, nextTurn: 0 };
+      this.setNpcFacing(npc, facing);
+      npc.nextTurn = this.now + Phaser.Math.Between(NPC_TURN_MIN_MS, NPC_TURN_MAX_MS);
+      this.npcs.push(npc);
+    }
+  }
+
+  private setNpcFacing(npc: NpcActor, facing: Facing, flip = false): void {
+    npc.facing = facing;
+    npc.sprite.setFlipX(facing === 'side' && flip);
+    npc.sprite.anims.play(npcIdleAnim(npc.def.look, facing), true);
+  }
+
+  /** O morador vira para um lado qualquer de vez em quando, enquanto ninguém conversa com ele. */
+  private updateNpcs(): void {
+    if (this.npcTarget) return;
+    for (const npc of this.npcs) {
+      if (this.now < npc.nextTurn) continue;
+      npc.nextTurn = this.now + Phaser.Math.Between(NPC_TURN_MIN_MS, NPC_TURN_MAX_MS);
+      const dir = Phaser.Math.Between(0, 3);
+      this.setNpcFacing(npc, dir === 0 ? 'down' : dir === 1 ? 'up' : 'side', dir === 3);
+    }
+  }
+
+  private npcAt(wx: number, wy: number): NpcActor | null {
+    for (const npc of this.npcs) if (npc.sprite.getBounds().contains(wx, wy)) return npc;
+    return null;
+  }
+
+  private nextToNpc(npc: NpcActor): boolean {
+    const me = this.playerTile();
+    return Math.abs(me.x - npc.def.x) + Math.abs(me.y - npc.def.y) === 1;
+  }
+
+  /** Clique num morador: anda até um tile vizinho (o mais perto do jogador) e conversa. */
+  private commandTalk(npc: NpcActor): void {
+    this.target = null;
+    this.path = [];
+    this.markerTile = null;
+    this.marker.clear();
+    if (this.nextToNpc(npc)) {
+      this.talk(npc);
+      return;
+    }
+    const me = this.playerTile();
+    let best: Pt[] | null = null;
+    let bestLen = Infinity;
+    for (const [dx, dy] of [[0, 1], [0, -1], [-1, 0], [1, 0]]) {
+      const n = { x: npc.def.x + dx, y: npc.def.y + dy };
+      if (!inBounds(this.grid, n.x, n.y) || !this.reachable(n)) continue;
+      const tiles = findPath(this.grid, me.x, me.y, n.x, n.y);
+      if (!tiles) continue;
+      const path = smoothPath(this.grid, { x: this.player.x, y: this.player.y }, tiles);
+      if (path.length && tiles.length < bestLen) {
+        best = path;
+        bestLen = tiles.length;
+      }
+    }
+    if (!best) return;
+    this.npcTarget = npc;
+    this.path = best;
+  }
+
+  /** Acompanha o caminho até o morador; ao chegar, conversa. */
+  private updateNpcTarget(): void {
+    const npc = this.npcTarget;
+    if (!npc || this.path.length) return;
+    this.npcTarget = null;
+    if (this.nextToNpc(npc)) this.talk(npc);
+  }
+
+  private talk(npc: NpcActor): void {
+    this.npcTarget = null;
+    this.stop();
+    const dx = npc.sprite.x - this.player.x;
+    const dy = npc.sprite.y - this.player.y;
+    this.face(dx, dy);
+    this.playAnim('idle');
+    // Vizinho em 4 direções: o eixo de maior distância diz para onde o morador olha de volta.
+    if (Math.abs(dx) > Math.abs(dy)) this.setNpcFacing(npc, 'side', dx > 0);
+    else this.setNpcFacing(npc, dy > 0 ? 'up' : 'down');
+    npc.nextTurn = this.now + NPC_TURN_MAX_MS;
+    this.lockUntil = this.now + AFTER_ENCOUNTER_MS;
+    this.game.events.emit('npc-talk', { npc: npc.def, regionId: this.region.id });
   }
 
   /** Chegada por uma saída, ou o spawn da região, ou `?at=x,y` / `?at=nome` (só na 1ª entrada), num tile andável. */
@@ -606,9 +717,16 @@ export class OverworldScene extends Phaser.Scene {
     if (a) {
       this.pressOnAnimal = true;
       this.target = a;
+      this.npcTarget = null;
       this.repathAt = 0;
       this.markerTile = null;
       this.marker.clear();
+      return;
+    }
+    const npc = this.npcAt(this.world.x, this.world.y);
+    if (npc) {
+      this.pressOnAnimal = true;
+      this.commandTalk(npc);
       return;
     }
     this.pressOnAnimal = false;
@@ -622,6 +740,7 @@ export class OverworldScene extends Phaser.Scene {
     if (!fresh && raw.x === this.lastCommand.x && raw.y === this.lastCommand.y) return;
     this.lastCommand = raw;
     this.target = null;
+    this.npcTarget = null;
 
     const me = this.playerTile();
     const myArea = this.grid.area[me.y * this.grid.w + me.x];
@@ -700,6 +819,7 @@ export class OverworldScene extends Phaser.Scene {
     if (this.leaving) return;
     this.leaving = true;
     this.target = null;
+    this.npcTarget = null;
     this.stop();
     this.setCursor('');
     const cam = this.cameras.main;
@@ -796,6 +916,7 @@ export class OverworldScene extends Phaser.Scene {
     if (!locked) {
       this.updateTarget(time);
       this.walk(dt);
+      this.updateNpcTarget();
     }
     this.playerSpeed = dt > 0 ? Math.hypot(this.player.x - x0, this.player.y - y0) / dt : 0;
     this.updateFauna(time, dt);
@@ -810,6 +931,7 @@ export class OverworldScene extends Phaser.Scene {
 
     this.player.setDepth(this.player.y);
     this.updateAlert();
+    if (!locked) this.updateNpcs();
     this.updateHover(pointer);
     this.updateFocus();
     this.updateExits(time);
@@ -868,6 +990,7 @@ export class OverworldScene extends Phaser.Scene {
    */
   private updateHover(pointer: Phaser.Input.Pointer): void {
     this.hovered = null;
+    this.hoveredNpc = null;
     const clear = () => {
       if (this.hoverKey) this.hover.clear();
       this.hoverKey = '';
@@ -881,6 +1004,13 @@ export class OverworldScene extends Phaser.Scene {
     const a = this.fauna?.at(this.world.x, this.world.y) ?? null;
     if (a) {
       this.hovered = a;
+      clear();
+      this.setCursor('pointer');
+      return;
+    }
+    const npc = this.npcAt(this.world.x, this.world.y);
+    if (npc) {
+      this.hoveredNpc = npc;
       clear();
       this.setCursor('pointer');
       return;
@@ -908,7 +1038,11 @@ export class OverworldScene extends Phaser.Scene {
     const a = this.hovered ?? this.target ?? null;
     const exit = !a && this.hoverKey ? this.hoverExit() : undefined;
     if (!a || !this.fauna) {
-      if (exit) {
+      const npc = a ? null : this.hoveredNpc;
+      if (npc) {
+        const nome = npc.def.role === 'loja' ? `${npc.def.name} · Loja` : npc.def.name;
+        this.label.setText(nome).setPosition(Math.round(npc.sprite.x), Math.round(npc.sprite.y - CHAR_H - 2)).setVisible(true);
+      } else if (exit) {
         const c = this.exitCenter(exit);
         const arrow = ['›', 'v', '‹', '^'][this.exitDir(exit)];
         const text = this.exitDir(exit) === 2 ? `${arrow} ${exit.label ?? exit.to}` : `${exit.label ?? exit.to} ${arrow}`;

@@ -1,0 +1,472 @@
+/* ==========================================================================
+   Interface das vilas: moedas numa placa de madeira, diálogo em papel de caderno,
+   loja e mochila como etiquetas de feira. Mesma linguagem do HUD (pixel art, Pixelify Sans).
+   Escala com --s (definida pelo GameUI em #ui).
+   ========================================================================== */
+
+.vl-box {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  color: var(--ink-brown);
+}
+
+/* ---------------------------------------------------------------- moedas e mochila (topo) */
+
+.vl-hud {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transform: translateX(-50%) scale(var(--s));
+  transform-origin: top center;
+  pointer-events: none;
+}
+
+.vl-hud[hidden] {
+  display: none;
+}
+
+.vl-chip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px 0 10px;
+  color: #ffdc84;
+  font: 600 18px/1 var(--pixel);
+  text-shadow: 0 2px 0 #2a180a;
+  background:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.1) 0 2px, transparent 2px 9px),
+    linear-gradient(#7d5030, #5c3a20);
+  box-shadow:
+    inset 0 3px 0 rgba(255, 215, 150, 0.28),
+    inset 0 -4px 0 rgba(0, 0, 0, 0.3),
+    0 -3px 0 0 #2a180a,
+    0 3px 0 0 #2a180a,
+    -3px 0 0 0 #2a180a,
+    3px 0 0 0 #2a180a,
+    0 8px 14px 2px rgba(0, 0, 0, 0.45);
+}
+
+.vl-coin {
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+  flex: none;
+}
+
+.vl-coins-num {
+  min-width: 2ch;
+  font-weight: 600;
+}
+
+/* "+N moedas" que sobe e some ao lado do chip. */
+.vl-gain {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  margin-left: 10px;
+  white-space: nowrap;
+  font: 600 18px/1 var(--pixel);
+  color: var(--leaf);
+  text-shadow: 0 2px 0 #04100e;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.vl-gain.show {
+  animation: vl-float 1.6s steps(8) forwards;
+}
+
+@keyframes vl-float {
+  0% {
+    opacity: 1;
+    transform: translateY(-50%);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(calc(-50% - 22px));
+  }
+}
+
+#ui .vl-bag-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px;
+  font: 600 16px/1 var(--pixel);
+  letter-spacing: 0.04em;
+  color: var(--paper);
+  text-shadow: 0 2px 0 #2a180a;
+  background: linear-gradient(#8a5a34, #5c3a20);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 215, 150, 0.25),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.3),
+    0 -2px 0 0 #2a180a,
+    0 2px 0 0 #2a180a,
+    -2px 0 0 0 #2a180a,
+    2px 0 0 0 #2a180a,
+    0 6px 12px 2px rgba(0, 0, 0, 0.4);
+  transition: translate 0.12s steps(3);
+}
+
+#ui .vl-bag-btn:hover {
+  translate: 0 -2px;
+}
+
+#ui .vl-bag-btn:active {
+  translate: 0 1px;
+}
+
+/* ---------------------------------------------------------------- véu (fundo dos painéis) */
+
+.vl-veil {
+  position: fixed;
+  inset: 0;
+  pointer-events: auto;
+  background: transparent;
+}
+
+.vl-veil.dim {
+  background: radial-gradient(ellipse at center, rgba(4, 28, 28, 0.6), rgba(2, 10, 10, 0.9));
+}
+
+.vl-veil[hidden] {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- papel e botões */
+
+.vl-paper {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: min(560px, calc(100vw / var(--s) - 32px));
+  max-height: calc(100vh / var(--s) - 32px);
+  display: flex;
+  flex-direction: column;
+  padding: 14px 18px 12px;
+  transform: translate(-50%, -50%) scale(var(--s));
+  pointer-events: auto;
+  background:
+    repeating-linear-gradient(0deg, rgba(60, 40, 15, 0.07) 0 1px, transparent 1px 22px),
+    radial-gradient(ellipse at 30% 20%, #f3e8c8, var(--paper-2));
+  border: 3px solid var(--wood-dark);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 230, 170, 0.35),
+    inset 0 0 14px rgba(120, 80, 30, 0.35),
+    0 6px 0 rgba(0, 0, 0, 0.35),
+    0 10px 18px rgba(0, 0, 0, 0.45);
+}
+
+.vl-paper[hidden] {
+  display: none;
+}
+
+.vl-paper header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 2px dashed rgba(90, 60, 25, 0.5);
+}
+
+.vl-title {
+  font: 600 20px/1 var(--pixel);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-brown);
+}
+
+.vl-wallet {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font: 600 16px/1 var(--pixel);
+  color: var(--ink-brown);
+}
+
+.vl-wallet img,
+.vl-mini-coin {
+  width: 18px;
+  height: 18px;
+  image-rendering: pixelated;
+}
+
+#ui .vl-x {
+  flex: none;
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  font: 600 20px/1 var(--pixel);
+  color: var(--paper);
+  background: var(--urucum);
+  box-shadow: inset 0 -3px 0 var(--urucum-dark), 0 0 0 2px #1a1000;
+}
+
+#ui .vl-x:hover {
+  filter: brightness(1.12);
+}
+
+#ui .vl-btn {
+  padding: 6px 12px 7px;
+  font: 600 15px/1 var(--pixel);
+  color: #1a1000;
+  background: var(--sun);
+  box-shadow:
+    inset 0 -3px 0 var(--sun-dark),
+    0 -2px 0 #1a1000,
+    0 2px 0 #1a1000,
+    -2px 0 0 #1a1000,
+    2px 0 0 #1a1000;
+  white-space: nowrap;
+  transition: translate 0.12s steps(3);
+}
+
+#ui .vl-btn:hover:not(:disabled) {
+  translate: 0 -2px;
+}
+
+#ui .vl-btn:active:not(:disabled) {
+  translate: 0 1px;
+}
+
+#ui .vl-btn:disabled {
+  cursor: not-allowed;
+  color: #6a5a40;
+  background: #b9ab88;
+  box-shadow:
+    inset 0 -3px 0 #8a7c5c,
+    0 -2px 0 #4a3e28,
+    0 2px 0 #4a3e28,
+    -2px 0 0 #4a3e28,
+    2px 0 0 #4a3e28;
+}
+
+.vl-msg {
+  min-height: 1.4em;
+  margin: 8px 0 0;
+  font: 400 15px/1.35 var(--pixel);
+  color: var(--ink-brown);
+}
+
+.vl-msg:empty {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- lista (loja e mochila) */
+
+.vl-list {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0 4px 0 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.vl-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px dashed rgba(90, 60, 25, 0.4);
+}
+
+.vl-row:last-child {
+  border-bottom: 0;
+}
+
+.vl-ico {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  image-rendering: pixelated;
+  background: rgba(90, 60, 25, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(90, 60, 25, 0.35);
+}
+
+.vl-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.vl-info b {
+  font: 600 16px/1.1 var(--pixel);
+  color: var(--ink-brown);
+}
+
+.vl-desc {
+  font: 400 13px/1.3 var(--pixel);
+  color: #5a4426;
+}
+
+.vl-own {
+  font: 400 13px/1.2 var(--pixel);
+  color: var(--moss);
+}
+
+.vl-buy {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.vl-price {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font: 600 14px/1 var(--pixel);
+  color: var(--ink-brown);
+}
+
+.vl-empty {
+  margin: 14px 0;
+  font: 400 15px/1.4 var(--pixel);
+  color: #5a4426;
+  text-align: center;
+}
+
+.vl-lure {
+  margin: 0 0 6px;
+  padding: 4px 8px;
+  font: 600 14px/1.2 var(--pixel);
+  color: #1a1000;
+  background: var(--leaf);
+  box-shadow: inset 0 -2px 0 #3f7a3a;
+}
+
+.vl-lure[hidden] {
+  display: none;
+}
+
+.vl-foot {
+  margin: 10px 0 0;
+  padding-top: 8px;
+  border-top: 2px dashed rgba(90, 60, 25, 0.5);
+  font: 400 13px/1.3 var(--pixel);
+  color: #5a4426;
+  font-style: italic;
+}
+
+/* Interruptor "Usar nas capturas" */
+.vl-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font: 400 13px/1.2 var(--pixel);
+  color: var(--ink-brown);
+  cursor: pointer;
+}
+
+.vl-switch input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 34px;
+  height: 18px;
+  margin: 0;
+  position: relative;
+  cursor: pointer;
+  background: #8a7c5c;
+  box-shadow: inset 0 0 0 2px #4a3e28;
+  transition: background 0.12s steps(2);
+}
+
+.vl-switch input::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 10px;
+  background: var(--paper);
+  box-shadow: 0 2px 0 #4a3e28;
+  transition: left 0.12s steps(2);
+}
+
+.vl-switch input:checked {
+  background: var(--leaf);
+}
+
+.vl-switch input:checked::after {
+  left: 18px;
+}
+
+.vl-switch input:focus-visible {
+  outline: 3px solid var(--sun);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------- diálogo (parte de baixo) */
+
+.vl-dialog {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  width: 480px;
+  max-width: calc(100vw / var(--s) - 280px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px 12px;
+  transform: translateX(-50%) scale(var(--s));
+  transform-origin: bottom center;
+  pointer-events: auto;
+  background:
+    repeating-linear-gradient(0deg, rgba(60, 40, 15, 0.07) 0 1px, transparent 1px 22px),
+    radial-gradient(ellipse at 30% 20%, #f3e8c8, var(--paper-2));
+  border: 3px solid var(--wood-dark);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 230, 170, 0.35),
+    0 6px 0 rgba(0, 0, 0, 0.35),
+    0 10px 18px rgba(0, 0, 0, 0.45);
+}
+
+.vl-dialog[hidden] {
+  display: none;
+}
+
+.vl-speaker {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.vl-name {
+  font: 600 18px/1 var(--pixel);
+  color: var(--urucum-dark);
+}
+
+.vl-role {
+  font: 400 12px/1 var(--pixel);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5a4426;
+}
+
+.vl-line {
+  margin: 0;
+  min-height: 3.2em;
+  font: 400 17px/1.4 var(--pixel);
+  color: var(--ink-brown);
+}
+
+.vl-next {
+  align-self: flex-end;
+}

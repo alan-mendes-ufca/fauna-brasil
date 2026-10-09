@@ -36,6 +36,30 @@ export interface RegionExit extends TilePos {
   label?: string;
 }
 
+/** Aparência de um morador (cores do spritesheet `npc_<look>`, em src/art/npc.ts). */
+export type NpcLook = 'vendedora' | 'pescador' | 'agricultora' | 'idoso' | 'menina' | 'guarda';
+
+/** Morador de uma vila. Ocupa (bloqueia) o próprio tile; o jogador conversa com ele ao clicar. */
+export interface NpcDef extends TilePos {
+  id: string;
+  name: string;
+  look: NpcLook;
+  /** 'loja' abre a loja depois da fala. */
+  role: 'loja' | 'morador';
+  /** Falas, uma por conversa (em sequência, recomeçando no fim). */
+  lines: string[];
+  facing?: 'down' | 'up' | 'side';
+}
+
+/** Clareira da vila dentro da região (retângulo em tiles): nenhum animal aparece ali. */
+export interface VillageZone extends TilePos {
+  name: string;
+  w: number;
+  h: number;
+  /** Colunas que o mapa original andou para a direita (vila a oeste): coordenadas antigas + shift. */
+  shift: number;
+}
+
 /** Uma área explorável do jogo. */
 export interface Region {
   id: string;
@@ -55,4 +79,7 @@ export interface Region {
   places?: Record<string, TilePos>;
   /** Passagens para outras regiões. */
   exits?: RegionExit[];
+  /** Vila dentro da região (src/world/village.ts). */
+  village?: VillageZone;
+  npcs?: NpcDef[];
 }

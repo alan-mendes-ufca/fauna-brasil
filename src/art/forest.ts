@@ -6,6 +6,7 @@ import { PROP_PAINTERS } from './forestProps';
 import { CAATINGA_GROUND, CAATINGA_TILES_KEY, buildCaatingaSheet, caatingaFrames, caatingaOverlays, CAATINGA_FRAME_NAMES } from './caatingaTiles';
 import { CAATINGA_PROPS, CAATINGA_PAINTERS } from './caatingaProps';
 import { ENV_MODULES } from '../biomes/env';
+import { VILLAGE_PAINTERS, VILLAGE_PROPS } from './village';
 
 // CONTRATO DE ARTE DA FLORESTA
 // As assinaturas e chaves abaixo são usadas pela cena de exploração. A arte pode ser
@@ -154,8 +155,8 @@ const FOREST_PROPS: Record<string, PropSpec> = {
   castanheira: { w: 80, h: 120, fw: 2, fh: 1, canopy: true },
 };
 
-/** Todos os objetos: os da floresta, os da Caatinga (e da transição: cocais e cerrado) e os dos biomas de src/biomes/. */
-export const PROPS: Record<string, PropSpec> = { ...FOREST_PROPS, ...CAATINGA_PROPS, ...Object.assign({}, ...ENV_MODULES.map((m) => m.props)) };
+/** Todos os objetos: os da floresta, os da Caatinga (e da transição: cocais e cerrado), os das vilas e os dos biomas de src/biomes/. */
+export const PROPS: Record<string, PropSpec> = { ...FOREST_PROPS, ...CAATINGA_PROPS, ...VILLAGE_PROPS, ...Object.assign({}, ...ENV_MODULES.map((m) => m.props)) };
 const MODULE_PAINTERS: Record<string, (p: Painter) => void> = Object.assign({}, ...ENV_MODULES.map((m) => m.painters));
 
 export const propKey = (type: string) => `prop_${type}`;
@@ -163,7 +164,7 @@ export const propKey = (type: string) => `prop_${type}`;
 /** Gera as texturas `prop_<tipo>` de todos os objetos de `PROPS`. */
 export function paintForestProps(scene: Phaser.Scene): void {
   for (const [type, s] of Object.entries(PROPS)) {
-    const draw = PROP_PAINTERS[type] ?? CAATINGA_PAINTERS[type] ?? MODULE_PAINTERS[type];
+    const draw = PROP_PAINTERS[type] ?? CAATINGA_PAINTERS[type] ?? VILLAGE_PAINTERS[type] ?? MODULE_PAINTERS[type];
     // Objeto ainda sem desenho: bloco provisório, para o mapa poder usá-lo antes da arte.
     paint(scene, propKey(type), s.w, s.h, (p) => (draw ? draw(p) : p.block(0, 0, s.w, s.h, '#1e5a2a', '#3a8a3a', '#0e3a1a', '#0a1a10')));
   }

@@ -23,6 +23,8 @@ import {
   throwQuality,
 } from '../capture/rules';
 import { FLIGHT_MS, SPEED_AT_ANIMAL, VelocityTracker, computeLaunch, flightAt, type Launch } from '../capture/throw';
+import { NET_BONUS } from '../data/items';
+import { bag } from '../state/bag';
 import { RARITY, getSpecies, type Habitat, type Iucn, type Rarity, type Species } from '../data/species';
 
 export interface CaptureInit {
@@ -127,6 +129,9 @@ export class CaptureScene extends Phaser.Scene {
   private finished = false;
   private resultShownAt = 0;
   private resultKind: CaptureResult | null = null;
+  /** O último arremesso que acertou usou rede reforçada (o bicho não foge se escapar). */
+  private reinforced = false;
+  private netLabel?: Phaser.GameObjects.Text;
 
   constructor() {
     super('Capture');
@@ -151,6 +156,7 @@ export class CaptureScene extends Phaser.Scene {
     this.thrown = false;
     this.finished = false;
     this.resultKind = null;
+    this.reinforced = false;
   }
 
   create(): void {
@@ -236,6 +242,14 @@ export class CaptureScene extends Phaser.Scene {
 
     this.hint = this.label(CAP_W / 2, 158, 'Arraste a rede para cima e solte', 8, '#d8fff0', { ox: 0.5 }).setDepth(DEPTH.hud);
     this.tweens.add({ targets: this.hint, alpha: 0.45, duration: 700, yoyo: true, repeat: -1 });
+    this.netLabel = this.label(6, 6, '', 7, '#ffe9a8').setDepth(DEPTH.hud);
+    this.updateNetLabel();
+  }
+
+  /** Quantas redes reforçadas restam (só aparece se houver e estiverem ativadas na mochila). */
+  private updateNetLabel(): void {
+    const n = bag.count('rede');
+    this.netLabel?.setText(bag.useNet && n ? `Rede reforçada ×${n}` : '');
   }
 
   /** Texto de interface: fonte pixel desenhada em resolução cheia (nítida com a câmera 3x). */
@@ -559,12 +573,20 @@ export class CaptureScene extends Phaser.Scene {
     if (label) this.floatText(x, y - 34, label, label === 'Boa!' ? 12 : label === 'Ótimo!' ? 15 : 18, tier);
     else if (q === 0 && !this.stunned) this.floatText(x, y - 30, 'Fora do anel', 8, '#d8fff0');
 
-    const p = catchProbability(this.species.rarity, q);
+    // Rede reforçada (mochila): gasta uma por arremesso que acerta.
+    this.reinforced = bag.consumeNet();
+    let p = catchProbability(this.species.rarity, q);
+    if (this.reinforced) {
+      p = Math.min(0.97, p + NET_BONUS);
+      this.floatText(x, y - 46, 'Rede reforçada!', 8, '#ffe9a8');
+      this.updateNetLabel();
+    }
     this.closeNet(f, p);
   }
 
   /** Arremesso que não acertou: sem teste de fuga. */
   private missThrow(launch: Launch, f: BehaviorFrame): void {
+    this.reinforced = false;
     const { landX: x, landY: y } = launch;
     const bx = CENTER_X + f.dx;
     const by = ANIMAL_CENTER_Y + f.dy;
@@ -687,7 +709,7 @@ export class CaptureScene extends Phaser.Scene {
     this.animalAnimState = '';
     this.floatText(x, y - 34, 'Escapou!', 12, '#ffe9d8');
 
-    const flees = !this.stunned && rollFlee(this.species.rarity);
+    const flees = !this.stunned && !this.reinforced && rollFlee(this.species.rarity);
     this.time.delayedCall(900, () => {
       if (!flees) {
         this.ringFrozen = null;
