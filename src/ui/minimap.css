@@ -1,0 +1,103 @@
+/* Minimapa: folha de campo desenhada a mão, presa com fita crepe numa moldura de madeira. */
+.mm {
+  --mm-w: 214px;
+  position: fixed;
+  right: 22px;
+  bottom: 18px;
+  width: var(--mm-w);
+  padding: 8px 8px 6px;
+  pointer-events: auto;
+  cursor: pointer;
+  color: var(--ink-brown);
+  background:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.07) 0 1px, transparent 1px 7px),
+    linear-gradient(#7a4e2b, #5a3519);
+  border: 3px solid var(--wood-dark);
+  box-shadow: 0 0 0 2px #a8773f inset, 0 6px 0 rgba(0, 0, 0, 0.35), 0 10px 18px rgba(0, 0, 0, 0.45);
+  transition: transform 0.12s steps(3), opacity 0.3s;
+}
+.mm:hover { transform: translateY(-2px); }
+.mm.off { opacity: 0; pointer-events: none; transform: translateY(12px); }
+.mm .mm-paper {
+  position: relative;
+  padding: 4px 4px 3px;
+  background: radial-gradient(ellipse at 30% 20%, #f3e8c8, var(--paper-2));
+  box-shadow: inset 0 0 0 1px rgba(90, 60, 25, 0.5), inset 0 0 14px rgba(120, 80, 30, 0.35);
+}
+.mm canvas { display: block; width: 100%; image-rendering: pixelated; }
+.mm-tape {
+  position: absolute; top: -9px; left: 50%; width: 54px; height: 14px; margin-left: -27px;
+  background: rgba(226, 205, 150, 0.82); transform: rotate(-3deg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  clip-path: polygon(0 0, 100% 0, 97% 50%, 100% 100%, 0 100%, 3% 50%);
+}
+.mm-foot {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 3px; font: 600 11px/1 var(--pixel); letter-spacing: 0.04em; color: var(--paper);
+}
+.mm-foot b { color: var(--sun); font-weight: 600; }
+.mm-foot kbd { background: var(--paper); color: var(--ink-brown); border-radius: 2px; }
+
+/* Modal expandido */
+.mm-layer {
+  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center;
+  background: rgba(2, 14, 14, 0.72); pointer-events: auto;
+}
+.mm-layer[hidden] { display: none; }
+.mm-sheet {
+  position: relative; width: min(880px, 94vw); padding: 22px 26px 18px;
+  color: var(--ink-brown);
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(255, 255, 255, 0.35), transparent 60%),
+    linear-gradient(var(--paper), var(--paper-2));
+  border: 6px solid var(--leather);
+  box-shadow: 0 0 0 3px #8a5a30 inset, 0 14px 40px rgba(0, 0, 0, 0.6);
+}
+.mm-sheet h2 { padding-right: 44px;
+  margin: 0 0 10px; font: 600 22px/1 var(--pixel); letter-spacing: 0.06em; color: var(--urucum-dark);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.mm-sheet h2 small { font-size: 13px; color: var(--kraft-dark); }
+.mm-sheet canvas { display: block; width: 100%; image-rendering: pixelated; border: 2px solid var(--kraft-dark); background: #e3d2a2; }
+.mm-legend {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 6px 18px;
+  margin: 12px 0 0; padding: 0; list-style: none; font: 400 14px/1.2 var(--pixel);
+}
+.mm-legend li { display: flex; align-items: center; gap: 8px; }
+.mm-legend i { width: 16px; height: 12px; border: 1px solid rgba(44, 32, 19, 0.7); flex: none; }
+.mm-legend .me i { border-radius: 50%; background: var(--urucum); border-color: #fff; }
+.mm-close {
+  position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; z-index: 2;
+  font: 600 18px/1 var(--pixel); color: var(--paper); background: var(--urucum);
+  border: 3px solid var(--urucum-dark) !important; box-shadow: 0 3px 0 rgba(0, 0, 0, 0.4);
+}
+@media (max-width: 700px) { .mm { --mm-w: 160px; } }
+
+.mm-stage { position: relative; width: 100%; }
+.mm-stage.big { margin-top: 20px; }
+.mm-stage canvas { filter: saturate(0.85) sepia(0.12); }
+.mm-veil { position: absolute; background: rgba(239, 227, 192, 0); pointer-events: none; }
+.mm-veil.dim { background: rgba(239, 227, 192, 0.55); }
+.mm-zone {
+  position: absolute; pointer-events: none;
+  outline: 1px dashed rgba(255, 245, 210, 0.95); outline-offset: -1px; background: rgba(20, 60, 25, 0.08);
+}
+.mm-zone b { position: absolute; bottom: 1px; left: 2px; font: 600 8px/1 var(--pixel); color: #fff3cc; text-shadow: 0 1px 0 #1d3a1d; display: none; white-space: nowrap; }
+.mm-stage.big .mm-zone b { display: block; font-size: 12px; bottom: 4px; left: 6px; }
+.mm-stage.big .mm-zone { outline-width: 2px; }
+.mm-tag { position: absolute; transform: translateY(-100%); margin-top: -1px; white-space: nowrap; font: 600 8px/1 var(--pixel); letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-brown); display: none; }
+.mm-stage.big .mm-tag { display: block; font-size: 13px; margin-top: -3px; }
+.mm-dot {
+  position: absolute; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%;
+  background: var(--urucum); box-shadow: 0 0 0 1.5px #fff, 0 0 4px 1px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+.mm-dot::after {
+  content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--urucum);
+  animation: mm-pulse 1.3s ease-out infinite;
+}
+.mm-stage.big .mm-dot { width: 14px; height: 14px; margin: -7px 0 0 -7px; }
+@keyframes mm-pulse { from { transform: scale(0.6); opacity: 1; } to { transform: scale(2.4); opacity: 0; } }
+.mm-rose { position: absolute; right: 6px; bottom: 6px; width: 54px; height: 54px; background: rgba(239, 227, 192, 0.75); border-radius: 50%; padding: 2px; }
+.mm-crop { position: relative; overflow: hidden; width: 100%; max-height: 190px; }
+.mm-crop .mm-stage.mini { position: absolute; max-width: none; }

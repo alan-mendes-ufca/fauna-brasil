@@ -1,0 +1,146 @@
+import type { Region } from '../../data/types';
+
+// Esboço gerado por script (coxilhas, banhados, butiazais, capões, trilhas) e depois congelado aqui: edite à vontade.
+// Legenda do mapa em ./tiles.ts. Objetos agrupados por tipo: [x, y] do tile da base esquerda.
+// Abertura (2 tiles de largura, na borda norte): x=26..27, y=0 (vem da Mata Atlântica).
+// Norte: faixa de transição "Campos de Cima da Serra" (campo de altitude, araucárias jovens e capões).
+// Sudeste: estância com taipa de pedra e porteira; sudoeste: lagoa com banhado; centro-sul: butiazal.
+
+type XY = [number, number];
+const place = (type: string, tiles: XY[]) => tiles.map(([x, y]) => ({ type, x, y }));
+
+const MAP = [
+  '##########################,,############################################',
+  '##########################,,############################################',
+  '##"""""........cccc###cccc,,ccccccccccccc............######........"""##',
+  '##""""""".....cccccccccccc,,cccccccccccccc....................bbbbb...##',
+  '##""""""""....cccccccccccc,,ccccccccccccc..............."""""bb####b..##',
+  '##."""""""....cccccccccccc,,cccccccbbbbcc............."""""""b#####b..##',
+  '##............cccccccccccc,,ccccccb###bbc............""""""""bb###bb..##',
+  '##............cccccccccccc,,ccccccb####bc............""""""bbbbbbb....##',
+  '##............cccccccccccc,,ccccccb###bcc............"""""bbbbbbbb....##',
+  '##............cccccccccccc,,cccccccbbbcccc..........."bbb"bbbbbbbb....##',
+  '##.............ccccccccccc,,cccccccccccccc...........b###bbbbbbbbbb..###',
+  '###............ccccccccccc,,ccccccccccccccc..........b###bbbbbbbbbb..###',
+  '###............ccccccccccc,,ccccccccccccccc..........b###bbbbbbbbb...###',
+  '###............ccccccccccc,,ccccccccccccccc...........bbb""bbbbbb....###',
+  '###............,,,,,,,,,..,,,ccc.......cccc......,,,,,,,"""""""......###',
+  '###....bb,,,,,,,,,,,,,,,,,,,,,,,,........,,,,,,,,,,,,,,,,,,,,,,"......##',
+  '##....,,,,,,,,,,.b###b.,,,,,,,,,,,,,,,,,,,,,,,,,,,jjj.",,,,,,,,,,,,,..##',
+  '##..,,,,,,#b,,...b###b.....,,...,,,,,,,,,,..jjj____jjj"""",,"",,,,,,..##',
+  '##..,,,####b,,...bb##b.....,,..............jj__~~~~__jj""",,""""".....##',
+  '##...b#####b,,.............,,bbbbb........jj__~~~~~~_jj""",,""""""....##',
+  '##""..bb#bb.,,............",,b###b........jj_~~~~~~~_jj""",,""""""....##',
+  '##"""..bbbbb,,...........",,,#####b.......jj_~~~~~~~_jj""",,"""""""...##',
+  '##"""".bbbbb,,...........",,bb###bb.......jjj_~~~~~_jj"""",,"""""""...##',
+  '##"""""bbbbb,,............,,"bbbbb"""......jjj_____jjjbbb",,"""""""...##',
+  '###"""bbbbbbbbb...........,,""""""""""".....jjjjjjjj####bb,,""""""....##',
+  '###bb""bbbbbbjjjjjjjj.....,,,,""""""""""".......j.bb#####b,,""""".....##',
+  '###b#bb"bbjjjjjjjjjjjjjj..,,,,,,,,,,,,,,""""......bb####bb,,""".......##',
+  '######b"jjjjjjjjjjjjjjjjj..,,,,,,,,,,,,,,bbbbbb""""bbbbbb",,..........##',
+  '######bjjjjjj_________jjjj.,,""""""bbbb,,bb###bb""""......,,..........##',
+  '######jjjjj____________jjjj,,,."""bbbbb,,,####bbb.........,,..........##',
+  '##"bbjjjj____~~~~~~~~___jjj.,,..."bbbbbb,,b###bbb.........,,.....bbb..##',
+  '##"""jjj___~~~~~~~~~~~~__jjj,,,..bbbbbbb,,,bbbbbbb........,,....bbbbb.##',
+  '##"""jjj__~~~~~~~~~~~~~__jjjj,,.bbbbbbbbb,,,bbbbbbb.......,,,..b####bb##',
+  '##..jjjj_~~~~~~~~~~~~~~jj_jjj...bjbbbbbbbb,,,bbbbbb........,,..b#####b##',
+  '##...jjj_~~~~~~~~~~~~~~jjjjjj..jjjbbbbbbbbb,,bbbbbbb.......,,..b####bb##',
+  '##...jjj__~~~~~~~~~~~~___jjjjjjjjbbbbbbbbbb,,,bbbbbb.......,,..bbb#bb.##',
+  '##...jjjj__~~~~~~~~~~___jjjjjjjbbbbbbbbbbbbb,,,,bbb........,,...bbbb..##',
+  '##....jjjj___~~~~~____jjjjjj....bbb####bbbbbb,,,,,,,....,,,,,.........##',
+  '##....bjjjjj________jjjjjjb.......b####bbbbbbbb,,,,,,,,,,,,,..........##',
+  '##...bb####jjjjjjjjjjjj###bb......bb###b....bb####b,,,,,,.............##',
+  '##...b#####jjjjjjjjjjj#####b.......bbbbb....b#####b...................##',
+  '###########b.....#########bb"".....###############b......###########..##',
+  '########################################################################',
+  '########################################################################',
+];
+
+const PROPS = [
+  ...place('placa_esq', [[24, 3]]),
+  ...place('pam_cerca_pedra', [[50, 28], [52, 28], [54, 28], [61, 28], [63, 28], [65, 28], [34, 22], [36, 22], [38, 22], [40, 22], [14, 27], [16, 27], [18, 27]]),
+  ...place('pam_porteira', [[57, 28]]),
+  ...place('pam_umbu', [[63, 34], [53, 33], [17, 19], [39, 21], [65, 20], [49, 28], [4, 37], [40, 40], [29, 37]]),
+  ...place('pam_cupim_campo', [[66, 31], [16, 22], [62, 29], [2, 37], [45, 25], [55, 21], [69, 21]]),
+  ...place('pam_araucaria_jovem', [[32, 5], [24, 11], [20, 5], [18, 12], [40, 4], [20, 8], [37, 11], [23, 6], [30, 12], [34, 12], [16, 8]]),
+  ...place('pam_capao', [[21, 7], [34, 10], [14, 8], [62, 33], [2, 20], [5, 25], [33, 35], [36, 23], [67, 28], [9, 21], [20, 24], [46, 27]]),
+  ...place('pam_butia', [[64, 36], [6, 38], [60, 12], [30, 23], [58, 10], [26, 39], [36, 31], [36, 40], [65, 31], [63, 3], [54, 23], [39, 37], [50, 35], [9, 25], [67, 30], [60, 7], [62, 13], [55, 9], [41, 35], [69, 34], [64, 7], [33, 36], [67, 6], [48, 30], [9, 20], [37, 36], [38, 8], [66, 10], [61, 4], [8, 23], [53, 10], [62, 6], [39, 33], [6, 24], [62, 10], [48, 34], [43, 27], [47, 28], [34, 8], [5, 40], [4, 30], [32, 33], [68, 32], [35, 29], [7, 21], [33, 22], [64, 40], [68, 22], [19, 23], [3, 40], [25, 19], [42, 26], [66, 27], [4, 24], [56, 18], [15, 20]]),
+  ...place('pam_corticeira', [[3, 35], [29, 38], [55, 19], [2, 30], [20, 23], [41, 21], [24, 25]]),
+  ...place('pam_junco', [[45, 23], [6, 29], [12, 39], [27, 37], [20, 26], [7, 30], [32, 34], [5, 35], [54, 21], [7, 36], [15, 39], [26, 35], [53, 22], [24, 34], [23, 29], [29, 36], [25, 32], [8, 37], [19, 25], [17, 26], [14, 26], [44, 18], [53, 20], [22, 37], [30, 35], [7, 28], [51, 23], [28, 34], [13, 27], [15, 25], [48, 25], [53, 18], [6, 37], [10, 26], [43, 23], [8, 27], [43, 20], [33, 33], [10, 29], [23, 33], [11, 38], [47, 24], [42, 21], [21, 27], [24, 28], [26, 33], [9, 28], [17, 39], [25, 38], [5, 33], [7, 34], [23, 26], [12, 26], [44, 22], [12, 28], [23, 38], [51, 16], [7, 38], [5, 30], [6, 31], [46, 23], [51, 22], [50, 17], [52, 20], [44, 21], [20, 37], [9, 32], [23, 30], [23, 36], [18, 37], [48, 23], [52, 18]]),
+  ...place('pam_macega', [[57, 9], [56, 6], [57, 22], [61, 19], [5, 3], [54, 16], [34, 23], [31, 29], [65, 22], [7, 26], [34, 28], [55, 8], [4, 31], [5, 24], [55, 22], [63, 22], [58, 6], [58, 14], [3, 23], [60, 4], [3, 3], [2, 31], [38, 25], [30, 25], [8, 4], [60, 14], [63, 19], [60, 23], [53, 7], [33, 30], [3, 21], [36, 25], [56, 14], [32, 25], [60, 26], [25, 21]]),
+  ...place('pam_pedra', [[50, 11], [33, 40], [2, 34], [62, 24], [40, 12], [11, 10], [4, 12], [54, 32], [43, 6], [68, 12], [16, 9], [5, 5], [32, 10], [17, 3]]),
+  ...place('pam_flores_campo', [[69, 23], [53, 16], [22, 16], [25, 9], [63, 14], [66, 14], [18, 11], [31, 40], [53, 34], [45, 3], [25, 24], [10, 13], [9, 10], [51, 7], [15, 11], [23, 5], [36, 18], [15, 41], [55, 36], [36, 13], [47, 25], [7, 12], [51, 13], [62, 32], [33, 7], [60, 30], [34, 20], [51, 10], [21, 4], [21, 22], [14, 3], [43, 24], [16, 20], [7, 9], [22, 9], [41, 11], [29, 34], [55, 40], [48, 8], [26, 27], [37, 20], [32, 18], [3, 39], [56, 32], [60, 39], [42, 6], [41, 4], [2, 16], [66, 39], [24, 19], [51, 29], [53, 37], [29, 23], [46, 28], [53, 12], [6, 20], [36, 28], [12, 25]]),
+];
+
+const LIGHTS = [
+    { x: 3.1, y: 3.9, radius: 6.7, color: 0xfff0d0, intensity: 0.86, rays: 3 },
+    { x: 13.0, y: 3.6, radius: 7.1, color: 0xf4f6ff, intensity: 0.80 },
+    { x: 22.8, y: 5.4, radius: 6.9, color: 0xeef4ff, intensity: 0.86, rays: 3 },
+    { x: 30.9, y: 3.7, radius: 6.6, color: 0xeef4ff, intensity: 0.83 },
+    { x: 38.1, y: 2.9, radius: 7.2, color: 0xeef4ff, intensity: 0.84 },
+    { x: 49.3, y: 3.3, radius: 8.8, color: 0xfff4dc, intensity: 0.82, rays: 3 },
+    { x: 56.4, y: 4.3, radius: 6.7, color: 0xf4f6ff, intensity: 0.79 },
+    { x: 67.0, y: 5.1, radius: 7.6, color: 0xffeec8, intensity: 0.92 },
+    { x: 3.8, y: 12.3, radius: 7.4, color: 0xfffae8, intensity: 0.74, rays: 3 },
+    { x: 14.3, y: 10.2, radius: 8.2, color: 0xeef4ff, intensity: 0.79 },
+    { x: 23.4, y: 11.0, radius: 9.2, color: 0xeef4ff, intensity: 0.93, rays: 3 },
+    { x: 29.5, y: 11.2, radius: 8.6, color: 0xeef4ff, intensity: 0.88, rays: 3 },
+    { x: 39.5, y: 11.8, radius: 7.2, color: 0xeef4ff, intensity: 0.85 },
+    { x: 48.2, y: 12.6, radius: 8.1, color: 0xf4f6ff, intensity: 0.93 },
+    { x: 58.5, y: 11.6, radius: 7.8, color: 0xfff0d0, intensity: 0.91, rays: 3 },
+    { x: 65.8, y: 10.6, radius: 8.7, color: 0xfff0d0, intensity: 0.95 },
+    { x: 2.7, y: 19.9, radius: 8.0, color: 0xf4f6ff, intensity: 0.96, rays: 3 },
+    { x: 14.4, y: 17.8, radius: 8.4, color: 0xfffae8, intensity: 0.84, rays: 3 },
+    { x: 21.1, y: 18.4, radius: 8.3, color: 0xf4f6ff, intensity: 0.75 },
+    { x: 30.6, y: 19.3, radius: 6.8, color: 0xfff0d0, intensity: 0.85, rays: 3 },
+    { x: 38.5, y: 19.7, radius: 9.2, color: 0xffeec8, intensity: 0.91 },
+    { x: 48.5, y: 18.3, radius: 6.6, color: 0xf4f6ff, intensity: 0.90 },
+    { x: 56.5, y: 17.9, radius: 8.9, color: 0xf4f6ff, intensity: 0.87 },
+    { x: 68.0, y: 18.5, radius: 7.9, color: 0xfff0d0, intensity: 0.87 },
+    { x: 5.1, y: 25.9, radius: 7.0, color: 0xfff0d0, intensity: 0.94, rays: 3 },
+    { x: 14.2, y: 26.3, radius: 9.2, color: 0xfffae8, intensity: 0.74 },
+    { x: 22.9, y: 25.4, radius: 8.1, color: 0xfff4dc, intensity: 0.84, rays: 3 },
+    { x: 31.7, y: 26.6, radius: 7.2, color: 0xfff0d0, intensity: 0.88, rays: 3 },
+    { x: 39.1, y: 27.6, radius: 7.7, color: 0xfffae8, intensity: 0.79 },
+    { x: 50.6, y: 26.4, radius: 7.4, color: 0xfff4dc, intensity: 0.94 },
+    { x: 57.0, y: 27.7, radius: 7.9, color: 0xfff4dc, intensity: 0.86 },
+    { x: 68.1, y: 25.3, radius: 8.7, color: 0xfff0d0, intensity: 0.90, rays: 3 },
+    { x: 2.9, y: 32.2, radius: 7.9, color: 0xffeec8, intensity: 0.82 },
+    { x: 12.4, y: 32.4, radius: 8.4, color: 0xffeec8, intensity: 0.96 },
+    { x: 22.2, y: 34.4, radius: 6.9, color: 0xfff4dc, intensity: 0.86 },
+    { x: 32.8, y: 32.2, radius: 7.8, color: 0xf4f6ff, intensity: 0.93 },
+    { x: 38.2, y: 32.5, radius: 6.8, color: 0xfff4dc, intensity: 0.81 },
+    { x: 47.4, y: 34.1, radius: 8.4, color: 0xfff4dc, intensity: 0.86 },
+    { x: 56.5, y: 33.4, radius: 7.8, color: 0xfff4dc, intensity: 0.83, rays: 3 },
+    { x: 65.8, y: 34.5, radius: 7.3, color: 0xfff4dc, intensity: 0.94 },
+    { x: 3.3, y: 40.6, radius: 7.8, color: 0xf4f6ff, intensity: 0.86 },
+    { x: 23.8, y: 39.9, radius: 7.6, color: 0xfff0d0, intensity: 0.93 },
+    { x: 41.2, y: 39.9, radius: 7.8, color: 0xffeec8, intensity: 0.87, rays: 3 },
+    { x: 50.0, y: 40.2, radius: 8.5, color: 0xfff4dc, intensity: 0.84, rays: 3 },
+];
+
+const PLACES = {
+    'campos-de-cima': { x: 17, y: 9 },
+    'de-mata-atlantica': { x: 26, y: 3 },
+    banhado: { x: 28, y: 31 },
+    coxilha: { x: 12, y: 22 },
+    butiazal: { x: 40, y: 30 },
+    estancia: { x: 58, y: 31 },
+};
+
+/** Pampa: coxilhas de campo nativo, banhados com juncal e lagoa, butiazais, capões de mato, taipas de pedra e uma porteira de estância. */
+export const REGION: Region = {
+  id: 'pampa',
+  name: 'Pampa',
+  biome: 'pampa',
+  map: MAP,
+  props: PROPS,
+  lights: LIGHTS,
+  // Sombra azul-acinzentada clara: céu aberto e luz fria do sul.
+  ambient: 0xcad0e6,
+  // Céu aberto: luz demais na camada de brilho vira névoa leitosa.
+  spill: 0.08,
+  spawn: PLACES['de-mata-atlantica'],
+  places: PLACES,
+  exits: [{ x: 26, y: 0, w: 2, to: 'mata-atlantica', at: 'de-pampa', label: 'Mata Atlântica' }],
+};
