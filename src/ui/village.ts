@@ -310,7 +310,7 @@ export class VillageUI {
     list.innerHTML = owned
       .map((id) => {
         const it = ITEMS[id];
-        let action = '';
+        let action: string;
         if (it.use === 'mochila') {
           action = `<button class="vl-btn" data-action="use" data-id="${id}">Usar</button>`;
         } else {

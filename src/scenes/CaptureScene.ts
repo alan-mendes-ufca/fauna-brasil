@@ -432,7 +432,7 @@ export class CaptureScene extends Phaser.Scene {
       this.animal.play(animalAnim(sp.id, state), true);
     }
 
-    let sx = f.scale;
+    const sx = f.scale;
     let sy = f.scale;
     let ox = 0;
     let alpha = f.alpha;
