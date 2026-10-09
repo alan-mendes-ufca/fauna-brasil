@@ -70,6 +70,13 @@ class BagState {
     this.changed();
   }
 
+  /** Item recebido de graça (ex.: troca no Centro de Conservação). */
+  grant(id: ItemId, qty = 1): void {
+    if (qty <= 0) return;
+    this.items[id] = this.count(id) + qty;
+    this.changed();
+  }
+
   buy(id: ItemId, qty = 1): boolean {
     const cost = ITEMS[id].price * qty;
     if (qty <= 0 || cost > this.coins) return false;

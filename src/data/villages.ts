@@ -39,6 +39,13 @@ export const VILLAGES: Record<string, VillageSpec> = {
           'Quem vende bicho do mato tira ele de casa pra morrer longe. Aqui ninguém faz isso.',
         ],
       },
+      {
+        id: 'am-centro', name: 'Dra. Marilu', look: 'biologa', role: 'centro',
+        lines: [
+          'A harpia, o boto-cor-de-rosa e a ariranha são espécies ameaçadas aqui. No Centro de Conservação a gente cuida dos filhotes pra devolver à mata.',
+          'Quando você captura uma espécie ameaçada, coleto uma amostra de DNA. Com ela, a incubadora do Centro faz nascer um filhote.',
+        ],
+      },
     ],
   },
   caatinga: {
@@ -72,6 +79,13 @@ export const VILLAGES: Record<string, VillageSpec> = {
         id: 'ca-menina', name: 'Lia', look: 'menina', role: 'morador',
         lines: ['Você já viu o mocó? Ele mora nas pedras do lajedo e assobia quando tem perigo!'],
       },
+      {
+        id: 'ca-centro', name: 'Dra. Cecília', look: 'biologa', role: 'centro',
+        lines: [
+          'A ararinha-azul e o soldadinho-do-araripe estão entre as aves mais ameaçadas da Caatinga. Cada amostra de DNA conta muito.',
+          'O Centro de Conservação incuba filhotes a partir do DNA que você coleta. Eles nunca são vendidos: só soltos ou levados a projetos de reintrodução.',
+        ],
+      },
     ],
   },
   cerrado: {
@@ -101,6 +115,13 @@ export const VILLAGES: Record<string, VillageSpec> = {
       {
         id: 'ce-idoso', name: 'Seu Antônio', look: 'idoso', role: 'morador',
         lines: ['Bicho grande tem que cansar numa luta antes de entrar na rede. Leve seu time descansado.'],
+      },
+      {
+        id: 'ce-centro', name: 'Dra. Helena', look: 'biologa', role: 'centro',
+        lines: [
+          'O pato-mergulhão é criticamente ameaçado, e o tatu-canastra e o tamanduá-bandeira também precisam de ajuda no Cerrado.',
+          'Traga amostras de DNA de espécies ameaçadas e eu cuido da incubadora. Filhote não se compra nem se vende, só se solta.',
+        ],
       },
     ],
   },
@@ -132,6 +153,13 @@ export const VILLAGES: Record<string, VillageSpec> = {
         id: 'ma-guarda', name: 'Guarda Helena', look: 'guarda', role: 'morador',
         lines: ['Corredores de mata ligam um fragmento ao outro. Sem eles, os bichos ficam presos em ilhas.'],
       },
+      {
+        id: 'ma-centro', name: 'Dra. Beatriz', look: 'biologa', role: 'centro',
+        lines: [
+          'O muriqui, o mico-leão-dourado e a jacutinga vivem em pedaços cada vez menores de Mata Atlântica. Por isso temos o Centro.',
+          'Cada filhote solto na natureza melhora sua reputação como protetor da fauna.',
+        ],
+      },
     ],
   },
   pampa: {
@@ -162,6 +190,13 @@ export const VILLAGES: Record<string, VillageSpec> = {
         id: 'pa-menina', name: 'Nina', look: 'menina', role: 'morador',
         lines: ['Nos banhados tem bicho que só aparece de manhãzinha. Tem que ter paciência!'],
       },
+      {
+        id: 'pa-centro', name: 'Dra. Lúcia', look: 'biologa', role: 'centro',
+        lines: [
+          'O cardeal-amarelo é uma ave ameaçada dos campos do sul, procurada por quem captura para criar em gaiola. Isso é crime.',
+          'O Centro de Conservação recebe o DNA que você coleta e faz nascer filhotes para soltar. Nada de comércio de bichos.',
+        ],
+      },
     ],
   },
   pantanal: {
@@ -191,6 +226,13 @@ export const VILLAGES: Record<string, VillageSpec> = {
       {
         id: 'pt-idoso', name: 'Seu Matias', look: 'idoso', role: 'morador',
         lines: ['O tuiuiú é o símbolo do Pantanal. Faz um ninhão de galhos no alto das árvores e volta pra ele todo ano.'],
+      },
+      {
+        id: 'pt-centro', name: 'Dra. Renata', look: 'biologa', role: 'centro',
+        lines: [
+          'A arara-azul-grande, a anta e o cervo-do-pantanal são espécies vulneráveis. Quem protege o Pantanal protege todas elas.',
+          'No Centro, o DNA das espécies ameaçadas vira filhote na incubadora. Pode soltar na natureza ou entregar a outro projeto de reintrodução.',
+        ],
       },
     ],
   },

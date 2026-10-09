@@ -2,6 +2,7 @@ import './village.css';
 import { ITEMS, ITEM_IDS, type ItemId } from '../data/items';
 import type { NpcDef } from '../data/types';
 import { bag } from '../state/bag';
+import { ConservationPanel } from './conservation';
 import { esc } from './format';
 
 // INTERFACE DAS VILAS
@@ -14,6 +15,8 @@ export interface VillageHandlers {
   onModal(open: boolean): void;
   /** True em cenas de tela cheia (captura, batalha, escolha do inicial): a interface some. */
   isFullScreen(): boolean;
+  /** Retrato de uma espécie para o Centro de Conservação ('' se não houver). */
+  speciesArt?(speciesId: string): string;
 }
 
 interface Bus {
@@ -70,6 +73,8 @@ function notebookOpen(): boolean {
   return !!layer && !layer.hidden;
 }
 
+const ROLE_LABEL: Record<NpcDef['role'], string> = { loja: 'Mercearia', centro: 'Centro de Conservação', morador: 'Morador da vila' };
+
 export class VillageUI {
   private readonly hud: HTMLElement;
   private readonly coinsNum: HTMLElement;
@@ -78,6 +83,7 @@ export class VillageUI {
   private readonly dialog: HTMLElement;
   private readonly shop: HTMLElement;
   private readonly bagPanel: HTMLElement;
+  private readonly center: ConservationPanel;
 
   /** Índice da próxima fala de cada morador (em memória, recomeça no fim). */
   private readonly talkIdx = new Map<string, number>();
@@ -139,6 +145,7 @@ export class VillageUI {
     this.dialog = box.querySelector('.vl-dialog')!;
     this.shop = box.querySelector('.vl-shop')!;
     this.bagPanel = box.querySelector('.vl-bag-panel')!;
+    this.center = new ConservationPanel(box, (id) => this.handlers.speciesArt?.(id) ?? '', () => this.sync());
 
     // O clique nos painéis nunca pode virar movimento do personagem.
     for (const type of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend']) {
@@ -159,7 +166,7 @@ export class VillageUI {
   // ------------------------------------------------------------------ estado
 
   private anyOpen(): boolean {
-    return !this.dialog.hidden || !this.shop.hidden || !this.bagPanel.hidden;
+    return !this.dialog.hidden || !this.shop.hidden || !this.bagPanel.hidden || this.center.isOpen;
   }
 
   /** Atualiza o véu e avisa o jogo só quando o estado "algum painel aberto" muda. */
@@ -178,12 +185,14 @@ export class VillageUI {
     if (full !== this.hud.hidden) this.hud.hidden = full;
     if (full && this.anyOpen()) this.closeAll();
     if (!this.bagPanel.hidden) this.renderLure();
+    this.center.tick();
   }
 
   private closeAll(): void {
     this.dialog.hidden = true;
     this.shop.hidden = true;
     this.bagPanel.hidden = true;
+    this.center.close();
     this.dialogNpc = null;
     this.sync();
   }
@@ -220,10 +229,10 @@ export class VillageUI {
     this.dialogNpc = npc;
 
     this.dialog.querySelector('.vl-name')!.textContent = npc.name;
-    this.dialog.querySelector('.vl-role')!.textContent = npc.role === 'loja' ? 'Mercearia' : 'Morador da vila';
+    this.dialog.querySelector('.vl-role')!.textContent = ROLE_LABEL[npc.role];
     this.dialog.querySelector('.vl-line')!.textContent = this.dialogLine;
     const next = this.dialog.querySelector<HTMLElement>('.vl-next')!;
-    next.textContent = npc.role === 'loja' ? 'Ver a loja ›' : 'Até mais ›';
+    next.textContent = npc.role === 'loja' ? 'Ver a loja ›' : npc.role === 'centro' ? 'Abrir o Centro ›' : 'Até mais ›';
     this.dialog.hidden = false;
     this.sync();
     next.focus({ preventScroll: true });
@@ -236,7 +245,10 @@ export class VillageUI {
     this.dialog.hidden = true;
     this.dialogNpc = null;
     if (npc.role === 'loja') this.openShop(npc.name);
-    else this.sync();
+    else if (npc.role === 'centro') {
+      this.center.open(npc.name);
+      this.sync();
+    } else this.sync();
   }
 
   // ------------------------------------------------------------------ loja
@@ -363,7 +375,8 @@ export class VillageUI {
         break;
       case 'veil':
         if (ev.target !== el) return;
-        if (!this.shop.hidden) this.closeShop();
+        if (this.center.isOpen) this.center.close();
+        else if (!this.shop.hidden) this.closeShop();
         else if (!this.bagPanel.hidden) this.closeBag();
         break;
       case 'next':
@@ -403,7 +416,8 @@ export class VillageUI {
     if (key === 'Escape') {
       ev.preventDefault();
       ev.stopImmediatePropagation();
-      if (!this.bagPanel.hidden) this.closeBag();
+      if (this.center.isOpen) this.center.close();
+      else if (!this.bagPanel.hidden) this.closeBag();
       else if (!this.shop.hidden) this.closeShop();
       else {
         this.dialog.hidden = true;

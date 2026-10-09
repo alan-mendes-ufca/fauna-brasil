@@ -108,6 +108,7 @@ export class GameUI {
     window.addEventListener('pointerdown', () => this.dismissHint(), { capture: true, once: true });
 
     events.on('capture-done', (p: CaptureDone) => this.onCaptureDone(p));
+    events.on('dna-collected', (p: { speciesId: string; amount: number }) => this.onDna(p));
     events.on('encounter-start', (p: { speciesId: string }) => this.markSeen(p.speciesId));
     window.setInterval(() => this.syncScenes(), 120);
 
@@ -212,6 +213,18 @@ export class GameUI {
     } else {
       this.toast(this.simpleToast(sp, result));
     }
+  }
+
+  private onDna({ speciesId, amount }: { speciesId: string; amount: number }): void {
+    const sp = SPECIES.find((s) => s.id === speciesId);
+    if (!sp) return;
+    this.toast(`
+      <span class="toast-string"></span>
+      <div class="toast-pic small">${this.sprite(sp.id, true)}</div>
+      <div class="toast-body">
+        <b class="kicker">Amostra de DNA coletada!</b>
+        <span class="plain">${esc(sp.name)}: +${amount}. Leve à bióloga de uma vila para incubar.</span>
+      </div>`);
   }
 
   // ------------------------------------------------------------------ HUD
