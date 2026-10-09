@@ -1,0 +1,56 @@
+name: E2E
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            tools/lint/package-lock.json
+      - run: npm ci
+      - name: Versão do Playwright
+        id: pw
+        run: echo "version=$(npx playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - name: Cache do Chromium
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+      - name: Instala o Chromium com as dependências do sistema
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - name: Instala só as dependências do sistema (Chromium em cache)
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+      - run: npm run e2e
+      - name: Prints dos cenários
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-prints
+          path: e2e/prints/*.png
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Relatório do Playwright
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-relatorio
+          path: |
+            e2e/relatorio
+            e2e/resultados
+          if-no-files-found: ignore
+          retention-days: 7
