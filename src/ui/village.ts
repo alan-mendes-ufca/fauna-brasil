@@ -1,7 +1,10 @@
 import './village.css';
 import { ITEMS, ITEM_IDS, type ItemId } from '../data/items';
 import type { NpcDef } from '../data/types';
+import { LEGENDS } from '../data/legends';
+import { REGIONS } from '../data/regions';
 import { bag } from '../state/bag';
+import { legends } from '../state/legends';
 import { ConservationPanel } from './conservation';
 import { GymPanel } from './gym';
 import { esc } from './format';
@@ -141,6 +144,7 @@ export class VillageUI {
         <ul class="vl-list"></ul>
         <p class="vl-empty" hidden>Mochila vazia. Compre itens na loja da vila.</p>
         <p class="vl-msg" aria-live="polite"></p>
+        <section class="vl-legends" aria-label="Guardiões do folclore"></section>
       </div>`;
     root.appendChild(box);
     this.hud = box.querySelector('.vl-hud')!;
@@ -353,6 +357,18 @@ export class VillageUI {
     this.bagPanel.querySelector<HTMLElement>('.vl-empty')!.hidden = owned.length > 0;
     this.bagPanel.querySelector<HTMLElement>('.vl-msg')!.textContent = this.bagMsg;
     this.renderLure();
+    this.renderLegends();
+  }
+
+  /** Guardiões do folclore: vencidos com título e lenda; os outros só como "???" e o bioma onde dormem. */
+  private renderLegends(): void {
+    const items = LEGENDS.map((l) => {
+      const biome = esc(REGIONS[l.regionId]?.name ?? l.regionId);
+      return legends.isDefeated(l.id)
+        ? `<li class="vl-legend won"><b>${esc(l.name)}</b> <em>${esc(l.reward.title)}</em><span>${esc(l.lore)}</span></li>`
+        : `<li class="vl-legend"><b>???</b> <em>${biome}</em><span>Um guardião dorme neste bioma. Capture um animal de peso cultural para despertá-lo.</span></li>`;
+    }).join('');
+    this.bagPanel.querySelector<HTMLElement>('.vl-legends')!.innerHTML = `<h3 class="vl-legends-h">Guardiões do folclore (${legends.count()}/${LEGENDS.length})</h3><ul>${items}</ul>`;
   }
 
   private renderLure(): void {

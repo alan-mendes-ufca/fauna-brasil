@@ -8,7 +8,9 @@ import { SPECIES, type Habitat } from '../data/species';
 import { paintForestProps, paintForestTiles } from '../art/forest';
 import { beginEncounter } from '../battle/flow';
 import { beginGym } from '../battle/gym';
+import { beginLegend } from '../battle/legendFlow';
 import { GYMS } from '../data/gyms';
+import { LEGENDS } from '../data/legends';
 import { party } from '../state/party';
 
 const HABITATS = Object.keys(HABITAT_LABEL) as Habitat[];
@@ -42,6 +44,7 @@ export class BootScene extends Phaser.Scene {
     const battleId = dev ? params.get('battle') : null;
     const battleSp = battleId ? SPECIES.find((sp) => sp.id === battleId) : undefined;
     const gymId = dev ? params.get('gym') : null;
+    const legend = dev ? LEGENDS.find((l) => l.id === params.get('legend')) : undefined;
     // Em desenvolvimento, parâmetros de teste da exploração pulam a escolha do inicial (?nostarter também); ?starter a força.
     const skipStarter = dev && ['at', 'region', 'demo', 'nostarter'].some((k) => params.has(k));
     if (species) {
@@ -56,6 +59,12 @@ export class BootScene extends Phaser.Scene {
       if (!party.hasStarter()) party.useTestTeam();
       this.game.events.once('gym-end', () => this.scene.start('Overworld', { region: gymId }));
       beginGym(this.game, gymId);
+      this.scene.stop();
+    } else if (legend) {
+      // ?legend=<id> abre a batalha do guardião direto (sem save usa um time de teste).
+      if (!party.hasStarter()) party.useTestTeam();
+      this.game.events.once('legend-end', () => this.scene.start('Overworld', { region: legend.regionId }));
+      beginLegend(this.game, legend.id);
       this.scene.stop();
     } else if (dev && params.has('gallery')) this.scene.start('Gallery');
     else if (dev && params.has('starter')) {

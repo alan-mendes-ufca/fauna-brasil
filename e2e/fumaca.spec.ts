@@ -55,6 +55,38 @@ test('?battle abre a batalha', async ({ page }) => {
   await imprimir(page, 'batalha');
 });
 
+/** Espera a entrada dos animais da batalha (animação lenta no renderizador por software). */
+async function esperarBatalhaPronta(page: Page): Promise<void> {
+  await esperarCena(page, 'Battle');
+  await page.waitForFunction(
+    () => {
+      const a = (window as unknown as { __game: { scene: { getScene(k: string): { myActor?: { spr: { alpha: number } } } } } }).__game.scene.getScene('Battle').myActor;
+      return a?.spr.alpha === 1;
+    },
+    null,
+    { timeout: 45_000 },
+  );
+}
+
+test('?gym=amazonia abre a batalha de ginásio', async ({ page }) => {
+  await abrir(page, 'gym=amazonia');
+  await esperarBatalhaPronta(page);
+  await expect(page.locator('.bt-note')).toContainText('Ginásio');
+  await expect(page.locator('.bt-run')).toHaveCount(0);
+  await assentar(page, 1500);
+  await imprimir(page, 'batalha-ginasio');
+});
+
+test('?legend=boiuna abre a batalha do guardião', async ({ page }) => {
+  await abrir(page, 'legend=boiuna');
+  await esperarBatalhaPronta(page);
+  await expect(page.locator('.bt-note')).toContainText('Guardião do folclore');
+  await expect(page.locator('.bt-wild .bt-pname')).toHaveText('Boiúna');
+  await expect(page.locator('.bt-run')).toHaveCount(0);
+  await assentar(page, 1500);
+  await imprimir(page, 'batalha-guardiao');
+});
+
 test('?capture abre a captura', async ({ page }) => {
   await abrir(page, 'capture=onca&habitat=agua');
   await esperarCena(page, 'Capture');
