@@ -30,6 +30,16 @@ export interface BattleInit {
   speciesId: string;
   habitat: Habitat;
   level: number;
+  /** Modo ginásio: sequência de 1x1 contra o time do líder (sem fuga nem captura). */
+  gym?: GymInit;
+}
+
+export interface GymInit {
+  leader: string;
+  /** Próximo animal do líder (o primeiro vem em speciesId/level), ou null quando o time acabou. */
+  next(): { speciesId: string; level: number } | null;
+  /** Aplica a vitória (insígnia, moedas) e devolve a mensagem final. */
+  onWin(): string;
 }
 
 type Choice = { kind: 'move'; index: number } | { kind: 'switch'; index: number } | { kind: 'flee' };
@@ -63,6 +73,7 @@ export class BattleScene extends Phaser.Scene {
   private active = 0;
   private participants = new Set<string>();
   private fleeFails = 0;
+  private gym: GymInit | null = null;
   private finished = false;
   private phase: Phase = 'busy';
   private pending: ((c: Choice) => void) | null = null;
@@ -94,6 +105,7 @@ export class BattleScene extends Phaser.Scene {
     this.pending = null;
     this.pendingSwitch = null;
     this.fleeFails = 0;
+    this.gym = data.gym ?? null;
     this.active = 0;
     this.participants = new Set();
     this.stars = [];
@@ -217,9 +229,13 @@ export class BattleScene extends Phaser.Scene {
           <div class="bt-types"></div>
           <div class="bt-hprow"><span class="bt-hplabel">Vigor</span><div class="bt-bar"><i class="bt-fill ok"></i></div></div>
         </div>
-        <div class="bt-note"><span class="bt-pin"></span>
-          <b>Animal de grande porte</b>
-          <span>Leve o vigor de ${esc(sp.name)} a zero para atordoá-lo. Só então dá para tentar a captura.</span>
+        <div class="bt-note"><span class="bt-pin"></span>${
+          this.gym
+            ? `<b>Ginásio</b>
+          <span>Derrote todo o time de ${esc(this.gym.leader)}. Não há captura nem fuga.</span>`
+            : `<b>Animal de grande porte</b>
+          <span>Leve o vigor de ${esc(sp.name)} a zero para atordoá-lo. Só então dá para tentar a captura.</span>`
+        }
         </div>
         <div class="bt-plate bt-mine">
           <div class="bt-ptop"><b class="bt-pname"></b><span class="bt-lv"></span></div>
@@ -234,7 +250,7 @@ export class BattleScene extends Phaser.Scene {
             <div class="bt-moves"></div>
             <div class="bt-side">
               <button type="button" class="bt-btn bt-swap" data-act="team">Trocar</button>
-              <button type="button" class="bt-btn bt-run" data-act="flee">Fugir</button>
+              ${this.gym ? '' : '<button type="button" class="bt-btn bt-run" data-act="flee">Fugir</button>'}
             </div>
           </div>
           <div class="bt-team"></div>
@@ -337,7 +353,7 @@ export class BattleScene extends Phaser.Scene {
         if (this.phase === 'menu') this.choose({ kind: 'move', index: i });
         break;
       case 'flee':
-        if (this.phase === 'menu') this.choose({ kind: 'flee' });
+        if (this.phase === 'menu' && !this.gym) this.choose({ kind: 'flee' });
         break;
       case 'team':
         if (this.phase === 'menu') {
@@ -429,7 +445,7 @@ export class BattleScene extends Phaser.Scene {
     me.glow.setAlpha(0);
     this.nudge(w, 120, 0);
     this.nudge(me, -80, 0);
-    await this.say(`${this.wild.name} selvagem bloqueia o caminho!`, 500);
+    await this.say(this.gym ? `${this.gym.leader} desafia você com ${this.wild.name}!` : `${this.wild.name} selvagem bloqueia o caminho!`, 500);
     await this.anim(380, (t) => this.nudge(w, 120 * (1 - t), 0), 'Quad.easeOut');
     this.renderPlate('wild');
     await this.say(`Vai, ${this.me.name}!`, 220);
@@ -491,6 +507,7 @@ export class BattleScene extends Phaser.Scene {
     await this.play(att, def, move, steps);
     this.syncMembers();
     if (this.wild.hp <= 0) {
+      if (this.gym) return (await this.onGymFoeDown()) ? 'end' : 'swap';
       await this.onStunned();
       return 'end';
     }
@@ -780,6 +797,36 @@ export class BattleScene extends Phaser.Scene {
     this.finish('stunned');
   }
 
+  /** Animal do líder caiu: dá XP e chama o próximo; sem mais nenhum, a insígnia é do jogador. Devolve true se acabou. */
+  private async onGymFoeDown(): Promise<boolean> {
+    const gym = this.gym!;
+    const w = this.wildActor;
+    this.renderPlate('wild');
+    await this.anim(450, (t) => {
+      this.setActorAlpha(w, 1 - t);
+      this.nudge(w, 0, 26 * t);
+    });
+    await this.say(`${this.wild.name} de ${gym.leader} está exausto!`);
+    await this.awardXp();
+    const foe = gym.next();
+    if (!foe) {
+      await this.say(gym.onWin(), 1400);
+      this.finish('won');
+      return true;
+    }
+    this.species = getSpecies(foe.speciesId);
+    this.wildLevel = foe.level;
+    this.wild = makeCombatant(foe.speciesId, foe.level, 'wild', 'wild');
+    this.participants = new Set([this.me.uid]);
+    this.setActorSpecies(w, foe.speciesId);
+    this.nudge(w, 0, 0);
+    this.renderPlate('wild');
+    this.renderMoves();
+    await this.say(`${gym.leader} envia ${this.wild.name}!`, 400);
+    await this.anim(350, (t) => this.setActorAlpha(w, t));
+    return false;
+  }
+
   private async awardXp(): Promise<void> {
     const reward = xpReward(this.species.rarity, this.wildLevel);
     for (const m of this.members) {
@@ -802,7 +849,7 @@ export class BattleScene extends Phaser.Scene {
     party.save();
   }
 
-  private finish(result: 'stunned' | 'lost' | 'ran'): void {
+  private finish(result: 'stunned' | 'lost' | 'ran' | 'won'): void {
     if (this.finished) return;
     this.finished = true;
     this.syncMembers();

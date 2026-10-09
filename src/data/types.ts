@@ -44,8 +44,8 @@ export interface NpcDef extends TilePos {
   id: string;
   name: string;
   look: NpcLook;
-  /** 'loja' abre a loja depois da fala; 'centro' abre o Centro de Conservação. */
-  role: 'loja' | 'centro' | 'morador';
+  /** 'loja' abre a loja depois da fala; 'centro' abre o Centro de Conservação; 'ginasio' abre o desafio do ginásio. */
+  role: 'loja' | 'centro' | 'ginasio' | 'morador';
   /** Falas, uma por conversa (em sequência, recomeçando no fim). */
   lines: string[];
   facing?: 'down' | 'up' | 'side';

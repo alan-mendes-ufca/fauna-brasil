@@ -65,6 +65,7 @@ const NPC_SLOTS: TilePos[] = [
   { x: 16, y: 9 },
   { x: 12, y: 12 },
   { x: 8, y: 11 },
+  { x: 11, y: 3 },
 ];
 
 export interface VillageSpec {
