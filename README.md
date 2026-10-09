@@ -75,4 +75,4 @@ Resumo; os detalhes (fluxo de branches, commits e testes) estão em [CONTRIBUTIN
 | `npm test` | Testes unitários com Jest e relatório de cobertura (`coverage/`) |
 | `npm run build` | Checagem de tipos e build de produção com Vite |
 
-Os testes ficam ao lado do código (`src/**/*.test.ts`) e cobrem só módulos puros. O CI roda em PRs e em pushes para `main`, em dois workflows: `Lint` (ESLint e `tsc --noEmit`) e `Testes` (Jest e build). Detalhes de testes, o motivo de `tools/lint` e o fluxo de contribuição estão em [CONTRIBUTING.md](CONTRIBUTING.md).
+Os testes ficam ao lado do código (`src/**/*.test.ts`) e cobrem só módulos puros. O CI roda em PRs e em pushes para `main`, em dois workflows: `Lint` (ESLint e `tsc --noEmit`) e `Tests` (Jest e build). Detalhes de testes, o motivo de `tools/lint` e o fluxo de contribuição estão em [CONTRIBUTING.md](CONTRIBUTING.md).

@@ -27,7 +27,7 @@ npm run dev
 
 ## Qualidade
 
-Rode antes de abrir o PR (o CI roda os mesmos comandos nos workflows `Lint`, em `.github/workflows/lint.yml`, e `Testes`, em `.github/workflows/testes.yml`):
+Rode antes de abrir o PR (o CI roda os mesmos comandos nos workflows `Lint`, em `.github/workflows/lint.yml`, e `Tests`, em `.github/workflows/tests.yml`):
 
 | Comando | O que faz |
 | --- | --- |
