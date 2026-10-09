@@ -2,6 +2,8 @@ import { PROPS, tilesetFor } from '../art/forest';
 import type { Region, TilePos } from '../data/types';
 import { ENV_MODULES, envOf } from '../biomes/env';
 import { OPEN_WATER, SPECIES, type Biome, type Habitat, type Rarity, type Species } from '../data/species';
+import { LURE_FACTOR } from '../data/items';
+import { bag } from '../state/bag';
 
 // Habitats do mapa e sorteio de espécies. Cada tile recebe uma máscara de habitats (um tile pode
 // ser de vários: chão perto da água e sob uma copa, por exemplo); o bioma da região decide quais.
@@ -36,6 +38,17 @@ export function isSwimmer(sp: Species): boolean {
 
 /** Máscara de habitats de cada tile (índice y * w + x). */
 export function habitatMap(region: Region): Uint32Array {
+  const out = rawHabitatMap(region);
+  // Dentro da vila não há bicho para encontrar: sem habitat, nada nasce ali.
+  const v = region.village;
+  if (v) {
+    const w = region.map[0].length;
+    for (let y = v.y; y < v.y + v.h; y++) out.fill(0, y * w + v.x, y * w + v.x + v.w);
+  }
+  return out;
+}
+
+function rawHabitatMap(region: Region): Uint32Array {
   const map = region.map;
   const h = map.length;
   const w = map[0].length;
@@ -111,11 +124,14 @@ export function matchHabitat(sp: Species, tileMask: number): Habitat | null {
  */
 export function pickForTile(biome: Biome, tileMask: number, water: boolean, rand: () => number = Math.random, penalty: (id: string) => number = () => 1): { species: Species; habitat: Habitat } | null {
   const pool: { species: Species; habitat: Habitat; w: number }[] = [];
+  // Isca de frutos (mochila): raras e lendárias pesam mais enquanto durar.
+  const lured = bag.lureActive();
   for (const sp of SPECIES) {
     if (sp.biome !== biome || isSwimmer(sp) !== water) continue;
     const habitat = matchHabitat(sp, tileMask);
     if (!habitat) continue;
-    pool.push({ species: sp, habitat, w: (RARITY_WEIGHT[sp.rarity] * SIZE_WEIGHT[sp.size]) / Math.max(1, penalty(sp.id)) });
+    const lure = lured && (sp.rarity === 'rara' || sp.rarity === 'lendaria') ? LURE_FACTOR : 1;
+    pool.push({ species: sp, habitat, w: (RARITY_WEIGHT[sp.rarity] * SIZE_WEIGHT[sp.size] * lure) / Math.max(1, penalty(sp.id)) });
   }
   if (!pool.length) return null;
   const total = pool.reduce((s, p) => s + p.w, 0);

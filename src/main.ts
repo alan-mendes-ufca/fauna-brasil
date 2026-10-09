@@ -9,8 +9,10 @@ import { GalleryScene } from './scenes/GalleryScene';
 import { OverworldScene } from './scenes/OverworldScene';
 import { StarterScene } from './scenes/StarterScene';
 import { bindParty } from './state/party';
+import { bindBag } from './state/bag';
 import { Minimap } from './ui/minimap';
 import { GameUI, type Crop } from './ui/GameUI';
+import { VillageUI } from './ui/village';
 import { Music, type Mood } from './audio/music';
 
 // ?canvas força o renderizador Canvas (o mesmo usado quando o navegador não tem WebGL).
@@ -30,6 +32,8 @@ const game = new Phaser.Game({
 
 // Capturas entram na coleção e o time recupera vigor ao fim de cada encontro.
 bindParty(game.events);
+// Moedas ganhas nas capturas (e gastas nas lojas das vilas).
+bindBag(game.events);
 
 /** Cenas de tela cheia com HUD próprio (captura, batalha, escolha do inicial): o HUD do caderno some. */
 const fullScreenScene = () => ['Capture', 'Battle', 'Starter'].some((key) => game.scene.isActive(key));
@@ -52,25 +56,35 @@ function art(key: string, crop?: Crop): string {
   return url;
 }
 
-// Com o caderno aberto a exploração fica congelada (e volta ao fechar, se fomos nós que a pausamos).
+// Com um painel de interface aberto (caderno, diálogo, loja, mochila) a exploração fica congelada;
+// volta ao fechar, se fomos nós que a pausamos.
 let pausedByUi = false;
+function setUiModal(open: boolean): void {
+  if (open) {
+    if (game.scene.isActive('Overworld')) {
+      game.scene.pause('Overworld');
+      pausedByUi = true;
+    }
+  } else if (pausedByUi) {
+    pausedByUi = false;
+    if (game.scene.isPaused('Overworld') && !fullScreenScene()) game.scene.resume('Overworld');
+  }
+}
+
 const ui = new GameUI(
   document.getElementById('ui')!,
   {
     art,
     isCapturing: fullScreenScene,
-    onNotebookToggle(open) {
-      if (open) {
-        if (game.scene.isActive('Overworld')) {
-          game.scene.pause('Overworld');
-          pausedByUi = true;
-        }
-      } else if (pausedByUi) {
-        pausedByUi = false;
-        if (game.scene.isPaused('Overworld') && !fullScreenScene()) game.scene.resume('Overworld');
-      }
-    },
+    onNotebookToggle: setUiModal,
   },
+  game.events,
+);
+
+// Moedas, diálogo com moradores, loja e mochila das vilas.
+const village = new VillageUI(
+  document.getElementById('ui')!,
+  { onModal: setUiModal, isFullScreen: fullScreenScene },
   game.events,
 );
 
@@ -110,4 +124,4 @@ if (import.meta.env.DEV && new URLSearchParams(location.search).get('demo') === 
 }
 
 // Acesso pelo console durante o desenvolvimento (ex.: __game.scene.getScene('Overworld')).
-if (import.meta.env.DEV) Object.assign(window, { __game: game, __ui: ui });
+if (import.meta.env.DEV) Object.assign(window, { __game: game, __ui: ui, __village: village });

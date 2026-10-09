@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { createAnimalAnims, paintAnimals } from '../art/animals';
 import { createWildlifeAnims, paintWildlife } from '../art/wildlife';
 import { createExplorerAnims, paintExplorer } from '../art/explorer';
+import { paintNpcs } from '../art/npc';
 import { HABITAT_LABEL } from '../data/biomes';
 import { SPECIES, type Habitat } from '../data/species';
 import { paintForestProps, paintForestTiles } from '../art/forest';
@@ -21,6 +22,7 @@ export class BootScene extends Phaser.Scene {
     paintForestProps(this);
     paintExplorer(this);
     createExplorerAnims(this);
+    paintNpcs(this);
     paintAnimals(this);
     paintWildlife(this);
     createWildlifeAnims(this);

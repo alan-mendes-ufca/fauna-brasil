@@ -130,9 +130,9 @@ function bob(rows: string[]): string[] {
   return ['................', ...rows.slice(0, rows.length - 1)];
 }
 
-function frame(upper: string[], legs: string[]) {
+function frame(upper: string[], legs: string[], palette: Record<string, string>) {
   const rows = [...upper, ...legs, '................'];
-  return (p: Painter) => p.template(rows, PALETTE);
+  return (p: Painter) => p.template(rows, palette);
 }
 
 // Sombra suave sob os pés, desenhada antes do corpo.
@@ -147,22 +147,23 @@ function withShadow(draw: (p: Painter) => void) {
  * 12 quadros: por direção (baixo, cima, lado) quatro quadros:
  * 0 parado · 1 parado (respirando) · 2 passo A · 3 passo B.
  */
-export function paintExplorer(scene: Phaser.Scene): void {
+export function paintExplorer(scene: Phaser.Scene, key = EXPLORER_KEY, colors: Partial<Record<string, string>> = {}): void {
   for (const [n, t] of Object.entries({ DOWN, UP, SIDE })) checkTemplate(n, t, 16);
   for (const [n, rows] of Object.entries(LEGS)) checkTemplate(`LEGS.${n}`, rows, 16);
-  paintSheet(scene, EXPLORER_KEY, CHAR_W, CHAR_H, [
-    withShadow(frame(DOWN, LEGS.idle)),
-    withShadow(frame(bob(DOWN), LEGS.idle)),
-    withShadow(frame(bob(DOWN), LEGS.walkA)),
-    withShadow(frame(bob(DOWN), LEGS.walkB)),
-    withShadow(frame(UP, LEGS.idle)),
-    withShadow(frame(bob(UP), LEGS.idle)),
-    withShadow(frame(bob(UP), LEGS.walkA)),
-    withShadow(frame(bob(UP), LEGS.walkB)),
-    withShadow(frame(SIDE, LEGS.sideIdle)),
-    withShadow(frame(bob(SIDE), LEGS.sideIdle)),
-    withShadow(frame(bob(SIDE), LEGS.sideA)),
-    withShadow(frame(bob(SIDE), LEGS.sideB)),
+  const pal = { ...PALETTE, ...colors } as Record<string, string>;
+  paintSheet(scene, key, CHAR_W, CHAR_H, [
+    withShadow(frame(DOWN, LEGS.idle, pal)),
+    withShadow(frame(bob(DOWN), LEGS.idle, pal)),
+    withShadow(frame(bob(DOWN), LEGS.walkA, pal)),
+    withShadow(frame(bob(DOWN), LEGS.walkB, pal)),
+    withShadow(frame(UP, LEGS.idle, pal)),
+    withShadow(frame(bob(UP), LEGS.idle, pal)),
+    withShadow(frame(bob(UP), LEGS.walkA, pal)),
+    withShadow(frame(bob(UP), LEGS.walkB, pal)),
+    withShadow(frame(SIDE, LEGS.sideIdle, pal)),
+    withShadow(frame(bob(SIDE), LEGS.sideIdle, pal)),
+    withShadow(frame(bob(SIDE), LEGS.sideA, pal)),
+    withShadow(frame(bob(SIDE), LEGS.sideB, pal)),
   ]);
 }
 

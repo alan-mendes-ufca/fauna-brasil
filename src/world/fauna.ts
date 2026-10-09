@@ -165,6 +165,8 @@ export class Fauna {
     const i = this.idx(x, y);
     if (isSwimmer(a.species)) return this.grid.water[i] === 1;
     if (this.grid.blocked[i]) return false;
+    const v = this.region.village;
+    if (v && x >= v.x && y >= v.y && x < v.x + v.w && y < v.y + v.h) return false;
     if (anyHabitat) return true;
     let mask = 0;
     for (const h of a.species.habitat) mask |= habitatBit(h);

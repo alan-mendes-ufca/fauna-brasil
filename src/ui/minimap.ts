@@ -36,6 +36,13 @@ const ZONES: Record<string, TransitionZone[]> = {
   ...Object.fromEntries(ENV_MODULES.map((m) => [m.region.id, m.meta.transitions])),
 };
 
+/** Faixas de transição (já na posição do mapa com a vila, se ela empurrou o mapa) e a própria vila. */
+function zonesOf(r: Region): TransitionZone[] {
+  const dx = r.village?.shift ?? 0;
+  const zones = (ZONES[r.id] ?? []).map((z) => ({ ...z, x: z.x + dx }));
+  return r.village ? [...zones, r.village] : zones;
+}
+
 const LEGEND: { c: string; t: string }[] = [
   { c: '#1d4a27', t: 'Mata fechada (Amazônia)' },
   { c: '#5f9a3e', t: 'Chão de floresta' },
@@ -191,7 +198,7 @@ export class Minimap {
     const tags = this.placed.map((p) => `<span class="mm-tag" style="left:${pct(p.x, W)};top:${pct(p.y, H)}">${p.r.name}</span>`).join('');
     const veils = this.placed.map((p) => `<div class="mm-veil" data-id="${p.r.id}" style="${box(p.x, p.y, p.r.map[0].length, p.r.map.length)}"></div>`).join('');
     const zones = this.placed
-      .flatMap((p) => (ZONES[p.r.id] ?? []).map((z) => `<div class="mm-zone" style="${box(p.x + z.x, p.y + z.y, z.w, z.h)}"><b>${z.name}</b></div>`))
+      .flatMap((p) => zonesOf(p.r).map((z) => `<div class="mm-zone" style="${box(p.x + z.x, p.y + z.y, z.w, z.h)}"><b>${z.name}</b></div>`))
       .join('');
     return `<div class="mm-stage ${cls}" style="aspect-ratio:${W}/${H}" data-k="${k}">
       <canvas width="${W * k}" height="${H * k}"></canvas>${veils}${zones}${tags}
@@ -232,7 +239,7 @@ export class Minimap {
     this.miniInner.style.left = `${(-p.x / rw) * 100}%`;
     this.miniInner.style.top = `${(-p.y / rh) * 100}%`;
     this.veils.forEach((v) => v.classList.toggle('dim', v.dataset.id !== r.id));
-    const zone = (ZONES[r.id] ?? []).find((z) => this.pos.x >= z.x && this.pos.y >= z.y && this.pos.x < z.x + z.w && this.pos.y < z.y + z.h);
+    const zone = zonesOf(r).find((z) => this.pos.x >= z.x && this.pos.y >= z.y && this.pos.x < z.x + z.w && this.pos.y < z.y + z.h);
     this.foot.innerHTML = `<b>${zone?.name ?? r.name}</b>`;
   }
 

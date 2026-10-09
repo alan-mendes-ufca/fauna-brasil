@@ -3,6 +3,8 @@ import type { Region, RegionExit, TilePos } from '../types';
 import { amazonia } from './amazonia';
 import { caatinga } from './caatinga';
 import { ENV_MODULES } from '../../biomes/env';
+import { withVillage } from '../../world/village';
+import { VILLAGES } from '../villages';
 
 /** Tiles de uma saída (retângulo x..x+w-1, y..y+h-1). */
 export function exitTiles(e: RegionExit): TilePos[] {
@@ -65,9 +67,11 @@ export function validateRegion(r: Region): void {
   checkSpot('spawn', r.spawn);
   for (const [name, t] of Object.entries(r.places ?? {})) checkSpot(`ponto "${name}"`, t);
   (r.exits ?? []).forEach((e, i) => exitTiles(e).forEach((t) => checkSpot(`saída #${i} (para ${e.to})`, t)));
+  for (const n of r.npcs ?? []) checkSpot(`morador "${n.id}"`, n);
 }
 
-const ALL: Region[] = [amazonia, caatinga, ...ENV_MODULES.map((m) => m.region)];
+// Cada bioma ganha a sua vila (a região cresce para um dos lados; ver src/world/village.ts).
+const ALL: Region[] = [amazonia, caatinga, ...ENV_MODULES.map((m) => m.region)].map((r) => (VILLAGES[r.id] ? withVillage(r, VILLAGES[r.id]) : r));
 ALL.forEach(validateRegion);
 
 export const REGIONS: Record<string, Region> = Object.fromEntries(ALL.map((r) => [r.id, r]));
