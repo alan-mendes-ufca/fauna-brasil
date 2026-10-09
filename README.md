@@ -45,7 +45,7 @@ O guia completo está em [docs/jogar.md](docs/jogar.md).
 
 ## Parâmetros de URL para desenvolvimento
 
-Funcionam com `npm run dev` (os marcados com * valem só no modo de desenvolvimento).
+Os marcados com * valem só no modo de desenvolvimento (`npm run dev`); os demais também funcionam no build.
 
 | Parâmetro | Efeito |
 | --- | --- |
@@ -58,6 +58,8 @@ Funcionam com `npm run dev` (os marcados com * valem só no modo de desenvolvime
 | `?nostarter` * | Pula a escolha do inicial |
 | `?demo=caderno` * | Abre o caderno com 5 espécies marcadas, sem gravar |
 | `?fauna=<id>` * | Põe um animal dessa espécie perto do jogador na exploração |
+| `?gym=<regionId>` * | Abre direto o desafio do ginásio da região (ex.: `?gym=cerrado`); sem save usa um time de teste |
+| `?legend=<id>` * | Abre direto a batalha do guardião (ex.: `?legend=boiuna`); sem save usa um time de teste |
 | `?canvas` * | Força o renderizador Canvas |
 
 No console, em desenvolvimento, `__game`, `__ui` e `__village` dão acesso ao jogo e à interface.
@@ -71,7 +73,7 @@ No console, em desenvolvimento, `__game`, `__ui` e `__village` dão acesso ao jo
 
 ## Roadmap
 
-Ainda não existem, e estão em issues abertas: ginásios (#3) e chefes (#4). A preservação (Centro de Conservação) já está na main; veja o [guia do jogador](docs/jogar.md#centro-de-conservação).
+Ginásios (um por bioma, com insígnias) e os guardiões do folclore (um por bioma, despertados por captura) já estão no código: veja [jogar.md](docs/jogar.md#ginásios) e [arquitetura.md](docs/arquitetura.md). A preservação (Centro de Conservação) também já existe; veja o [guia do jogador](docs/jogar.md#centro-de-conservação).
 
 ## Qualidade
 
@@ -89,7 +91,7 @@ Os testes ficam ao lado do código (`src/**/*.test.ts`) e cobrem só módulos pu
 
 ### Testes no navegador (`e2e/`)
 
-Um servidor `vite` em modo de desenvolvimento (porta 5199) sobe sozinho; o Playwright abre as 6 regiões, `?starter`, `?battle`, `?capture`, `?demo=caderno`, a loja e o Centro de Conservação da vila, o minimapa (`M`) e a mochila (`I`). Qualquer `pageerror` ou `console.error` reprova o cenário, e cada print precisa ter muitas cores (um canvas vazio falha). Não há comparação pixel a pixel.
+Um servidor `vite` em modo de desenvolvimento (porta 5199) sobe sozinho; o Playwright abre as 6 regiões, `?starter`, `?battle`, `?gym=amazonia`, `?legend=boiuna`, `?capture`, `?demo=caderno`, a loja e o Centro de Conservação da vila, o minimapa (`M`) e a mochila (`I`). Qualquer `pageerror` ou `console.error` reprova o cenário, e cada print precisa ter muitas cores (um canvas vazio falha). Não há comparação pixel a pixel.
 
 - Sem GPU, o canvas 2D acelerado por SwiftShader tornava a pintura procedural do boot ~15x mais lenta (~70 s) e os prints saíam em branco; por isso o Chromium roda com `--disable-accelerated-2d-canvas` (WebGL continua por software).
 - `PW_CHROMIUM_PATH` aponta para um Chromium já instalado, se o do Playwright não estiver disponível.

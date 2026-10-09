@@ -53,11 +53,12 @@ As regiões de `ENV_MODULES` entram em `REGIONS` automaticamente (veja o fim de 
 ## Adicionar uma vila com loja
 
 1. Acrescente uma entrada em `VILLAGES` (`src/data/villages.ts`), com a chave igual ao id da região: `name`, `side` (`east` ou `west`), `door` (linha do mapa original onde a trilha entra), caracteres do bioma (`ground`, `brush`, `path`), `seed` e `npcs`.
-2. **Moradores** (`NpcDef`, sem `x` e `y`): `id`, `name`, `look` (`vendedora`, `pescador`, `agricultora`, `idoso`, `menina`, `guarda`, `biologa`), `role` e `lines`. O primeiro morador é sempre quem cuida da loja (`role: 'loja'`). A bióloga do Centro de Conservação usa `role: 'centro'` e `look: 'biologa'`; ela abre o painel do Centro, que é o mesmo em todas as vilas. Os demais usam `role: 'morador'`. O máximo de moradores (contando loja e bióloga) é o número de `NPC_SLOTS` em `src/world/village.ts`.
+2. **Moradores** (`NpcDef`, sem `x` e `y`): `id`, `name`, `look` (`vendedora`, `pescador`, `agricultora`, `idoso`, `menina`, `guarda`, `biologa`), `role` e `lines`. O primeiro morador é sempre quem cuida da loja (`role: 'loja'`). A bióloga do Centro de Conservação usa `role: 'centro'` e `look: 'biologa'`; ela abre o painel do Centro, que é o mesmo em todas as vilas. Os demais usam `role: 'morador'`. O máximo de moradores é o número de `NPC_SLOTS` em `src/world/village.ts` (hoje 6), contando loja, bióloga e o líder do ginásio, que é acrescentado automaticamente (veja abaixo).
 3. `withVillage` (`src/world/village.ts`) acrescenta uma faixa de 30 colunas ao mapa (`STRIP_W`), com a clareira, casas, loja, poço e moradores. Tudo o que já existia no lado oeste anda 30 colunas para a direita. Por isso a vila deve ser planejada junto com as `exits` e `places` da região, que são deslocados automaticamente.
 4. A loja vende os itens de `ITEMS` (`src/data/items.ts`). Para um item novo, acrescente a entrada em `ITEMS`, o efeito em `src/state/bag.ts` e, se for usado na captura, em `CaptureScene`.
 5. **Regra:** a loja nunca vende nem compra animais. Mantenha falas de moradores que reforcem a mensagem contra o tráfico de fauna.
 6. Rode `npm test`: `src/world/village.test.ts` valida as regiões com vila (`validateRegion`) e o comportamento de `withVillage`.
+7. O ginásio do bioma entra na vila sozinho, como último morador (`src/data/villages.ts`). Vila sem entrada em `VILLAGES` fica sem líder, sem erro: confira no jogo.
 
 ## Dados de espécies e status IUCN
 
@@ -74,3 +75,31 @@ Onde está o aviso no código:
 | `src/biomes/pantanal/species.ts` (comentário no topo) | Status de memória e fontes secundárias; confirmar |
 
 Ao confirmar uma espécie, corrija o valor, remova o comentário "a confirmar" daquela linha e anote a fonte e a data no comentário do arquivo. Espécies descritas recentemente podem não ter categoria própria (`NE`).
+
+## Adicionar ou editar um ginásio
+
+Cada bioma tem um ginásio (`GYMS` em `src/data/gyms.ts`). A chave é o id da região, e a região precisa ter uma vila (veja acima), porque o líder é colocado nela.
+
+1. **Dados.** Um objeto `Gym` por bioma: `regionId` (igual à chave), `name`, `leader` (`id`, `name`, `look` de `NpcDef`, `line` com a fala da vila), `team` (2 a 3 `GymFoe`, com `speciesId` e `level`), `badge` (nome da insígnia) e `coins` (moedas da primeira vitória).
+2. **Regras.** Os animais do time são do próprio bioma, em níveis crescentes, na ordem de entrada na luta. `src/state/gyms.test.ts` confere isso: um ginásio por bioma, 2 a 3 animais do bioma e níveis crescentes.
+3. **Painel e insígnia.** O painel (`src/ui/gym.ts`) lê `GYMS` sozinho. A insígnia é ganha ao vencer o time inteiro (`gyms.win`), e as moedas só na primeira vez.
+4. Confira com `?gym=<regionId>` (só em desenvolvimento), que abre o desafio direto.
+
+Para trocar só o time ou as falas, edite o ginásio existente. Não é preciso mexer em outro arquivo, a não ser que a espécie nova ainda não exista (veja "Adicionar uma espécie").
+
+## Adicionar um guardião do folclore
+
+Os guardiões ficam em `LEGENDS` (`src/data/legends.ts`). O jogo tem um por bioma, e `src/data/legends.test.ts` espera exatamente seis, com `regionId` distintos. Para acrescentar um segundo guardião a um bioma, altere esse teste de propósito, porque `legendForRegion` devolve só o primeiro.
+
+1. **Dados.** Um objeto `Legend` com:
+   - `id` único, `name`, `regionId` (o bioma onde desperta) e `tint` (0xRRGGBB);
+   - `triggers`: 1 a 3 espécies **do próprio bioma** cuja captura desperta o guardião;
+   - `baseSpecies`: uma espécie do bioma usada como corpo (recebe o tint);
+   - `level` entre 12 e 22 e `hpMultiplier` entre 2 e 3.5 (vigor máximo = vigor do corpo × multiplicador);
+   - `lore`, `intro` e `defeatLine` (falas curtas);
+   - `phases`: 2 ou 3 fases, a primeira com `at: 1` e as demais com `at` estritamente decrescente dentro de (0, 1]. Cada fase tem uma `line` de até 90 caracteres e uma `mechanic` (`furia`, `escudo`, `regenera`, `confusao` ou `investida`; veja `docs/jogar.md`);
+   - `reward`: `coins` entre 200 e 400, `xp` entre 150 e 400, `title` e, se houver, `item` com `id` existente em `ITEMS` e `qty` de pelo menos 1.
+2. **Testes.** Rode `npm test`: `src/data/legends.test.ts` confere todas as faixas acima, os gatilhos e a base do bioma certo, e os itens de recompensa. `src/state/legends.test.ts` cobre despertar e vitória.
+3. **Jogo.** Confira com `?legend=<id>` (só em desenvolvimento). Depois, capture um gatilho na região para ver o despertar de verdade.
+
+A mecânica de cada fase está em `src/battle/legend.ts` e não muda com os dados. Para criar uma mecânica nova é preciso codificá-la lá e na `BattleScene`.
