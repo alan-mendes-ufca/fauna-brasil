@@ -7,6 +7,8 @@ import { HABITAT_LABEL } from '../data/biomes';
 import { SPECIES, type Habitat } from '../data/species';
 import { paintForestProps, paintForestTiles } from '../art/forest';
 import { beginEncounter } from '../battle/flow';
+import { beginGym } from '../battle/gym';
+import { GYMS } from '../data/gyms';
 import { party } from '../state/party';
 
 const HABITATS = Object.keys(HABITAT_LABEL) as Habitat[];
@@ -39,6 +41,7 @@ export class BootScene extends Phaser.Scene {
     // ?battle=onca&habitat=agua[&lv=6] abre o encontro completo (batalha e captura); sem save usa um time de teste.
     const battleId = dev ? params.get('battle') : null;
     const battleSp = battleId ? SPECIES.find((sp) => sp.id === battleId) : undefined;
+    const gymId = dev ? params.get('gym') : null;
     // Em desenvolvimento, parâmetros de teste da exploração pulam a escolha do inicial (?nostarter também); ?starter a força.
     const skipStarter = dev && ['at', 'region', 'demo', 'nostarter'].some((k) => params.has(k));
     if (species) {
@@ -47,6 +50,12 @@ export class BootScene extends Phaser.Scene {
       if (!party.hasStarter()) party.useTestTeam();
       this.game.events.once('encounter-end', () => this.scene.start('Overworld', { region: 'amazonia' }));
       beginEncounter(this.game, { speciesId: battleSp.id, habitat: habitatOf(battleSp), level: params.has('lv') ? Number(params.get('lv')) : undefined });
+      this.scene.stop();
+    } else if (gymId && GYMS[gymId]) {
+      // ?gym=<regionId> abre o desafio do ginásio direto (sem save usa um time de teste).
+      if (!party.hasStarter()) party.useTestTeam();
+      this.game.events.once('gym-end', () => this.scene.start('Overworld', { region: gymId }));
+      beginGym(this.game, gymId);
       this.scene.stop();
     } else if (dev && params.has('gallery')) this.scene.start('Gallery');
     else if (dev && params.has('starter')) {

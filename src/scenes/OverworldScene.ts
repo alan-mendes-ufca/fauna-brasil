@@ -11,6 +11,7 @@ import { findPath, smoothPath, type Pt } from '../world/pathfind';
 import { LightLayer, type SceneLight } from './LightLayer';
 import type { Habitat } from '../data/species';
 import { beginEncounter, type EncounterEnd } from '../battle/flow';
+import { beginGym } from '../battle/gym';
 import { Fauna, type Animal } from '../world/fauna';
 
 // --- câmera e movimento
@@ -899,6 +900,19 @@ export class OverworldScene extends Phaser.Scene {
       } else this.fauna.release(animal, now, this.player.x, this.player.y);
     });
     beginEncounter(this.game, { speciesId, habitat });
+  }
+
+  /** Desafio de ginásio: congela a exploração como num encontro e volta ao fim da sequência de batalhas. */
+  startGym(regionId: string): void {
+    this.lightLayer?.setVisible(false);
+    this.setCursor('');
+    this.scene.pause();
+    this.game.events.once('gym-end', () => {
+      this.lightLayer?.setVisible(true);
+      this.scene.resume();
+      this.lockUntil = this.game.loop.time + AFTER_ENCOUNTER_MS;
+    });
+    beginGym(this.game, regionId);
   }
 
   // ------------------------------------------------------------------ quadro a quadro

@@ -3,6 +3,7 @@ import { ITEMS, ITEM_IDS, type ItemId } from '../data/items';
 import type { NpcDef } from '../data/types';
 import { bag } from '../state/bag';
 import { ConservationPanel } from './conservation';
+import { GymPanel } from './gym';
 import { esc } from './format';
 
 // INTERFACE DAS VILAS
@@ -17,6 +18,8 @@ export interface VillageHandlers {
   isFullScreen(): boolean;
   /** Retrato de uma espécie para o Centro de Conservação ('' se não houver). */
   speciesArt?(speciesId: string): string;
+  /** O jogador pediu para desafiar o ginásio da região (o jogo começa a sequência de batalhas). */
+  onGymChallenge?(regionId: string): void;
 }
 
 interface Bus {
@@ -73,7 +76,7 @@ function notebookOpen(): boolean {
   return !!layer && !layer.hidden;
 }
 
-const ROLE_LABEL: Record<NpcDef['role'], string> = { loja: 'Mercearia', centro: 'Centro de Conservação', morador: 'Morador da vila' };
+const ROLE_LABEL: Record<NpcDef['role'], string> = { loja: 'Mercearia', centro: 'Centro de Conservação', ginasio: 'Líder de ginásio', morador: 'Morador da vila' };
 
 export class VillageUI {
   private readonly hud: HTMLElement;
@@ -84,10 +87,12 @@ export class VillageUI {
   private readonly shop: HTMLElement;
   private readonly bagPanel: HTMLElement;
   private readonly center: ConservationPanel;
+  private readonly gymPanel: GymPanel;
 
   /** Índice da próxima fala de cada morador (em memória, recomeça no fim). */
   private readonly talkIdx = new Map<string, number>();
   private dialogNpc: NpcDef | null = null;
+  private dialogRegion = '';
   private dialogLine = '';
   private shopMsg = '';
   private bagMsg = '';
@@ -146,6 +151,7 @@ export class VillageUI {
     this.shop = box.querySelector('.vl-shop')!;
     this.bagPanel = box.querySelector('.vl-bag-panel')!;
     this.center = new ConservationPanel(box, (id) => this.handlers.speciesArt?.(id) ?? '', () => this.sync());
+    this.gymPanel = new GymPanel(box, (id) => this.handlers.speciesArt?.(id) ?? '', (id) => this.handlers.onGymChallenge?.(id), () => this.sync());
 
     // O clique nos painéis nunca pode virar movimento do personagem.
     for (const type of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend']) {
@@ -155,7 +161,7 @@ export class VillageUI {
     box.addEventListener('change', (ev) => this.onChange(ev));
     window.addEventListener('keydown', (ev) => this.onKey(ev), { capture: true });
 
-    events.on('npc-talk', (p: { npc: NpcDef }) => this.openDialog(p.npc));
+    events.on('npc-talk', (p: { npc: NpcDef; regionId?: string }) => this.openDialog(p.npc, p.regionId ?? ''));
     events.on('coins-earned', (p: { amount: number }) => this.showGain(p.amount));
     bag.onChange(() => this.onBagChange());
     window.setInterval(() => this.tick(), 150);
@@ -166,7 +172,7 @@ export class VillageUI {
   // ------------------------------------------------------------------ estado
 
   private anyOpen(): boolean {
-    return !this.dialog.hidden || !this.shop.hidden || !this.bagPanel.hidden || this.center.isOpen;
+    return !this.dialog.hidden || !this.shop.hidden || !this.bagPanel.hidden || this.center.isOpen || this.gymPanel.isOpen;
   }
 
   /** Atualiza o véu e avisa o jogo só quando o estado "algum painel aberto" muda. */
@@ -193,6 +199,7 @@ export class VillageUI {
     this.shop.hidden = true;
     this.bagPanel.hidden = true;
     this.center.close();
+    this.gymPanel.close();
     this.dialogNpc = null;
     this.sync();
   }
@@ -220,19 +227,20 @@ export class VillageUI {
 
   // ------------------------------------------------------------------ diálogo
 
-  private openDialog(npc: NpcDef): void {
+  private openDialog(npc: NpcDef, regionId = ''): void {
     if (this.anyOpen() || this.handlers.isFullScreen()) return;
     const lines = npc.lines.length ? npc.lines : ['...'];
     const i = this.talkIdx.get(npc.id) ?? 0;
     this.dialogLine = lines[i % lines.length];
     this.talkIdx.set(npc.id, (i + 1) % lines.length);
     this.dialogNpc = npc;
+    this.dialogRegion = regionId;
 
     this.dialog.querySelector('.vl-name')!.textContent = npc.name;
     this.dialog.querySelector('.vl-role')!.textContent = ROLE_LABEL[npc.role];
     this.dialog.querySelector('.vl-line')!.textContent = this.dialogLine;
     const next = this.dialog.querySelector<HTMLElement>('.vl-next')!;
-    next.textContent = npc.role === 'loja' ? 'Ver a loja ›' : npc.role === 'centro' ? 'Abrir o Centro ›' : 'Até mais ›';
+    next.textContent = npc.role === 'loja' ? 'Ver a loja ›' : npc.role === 'centro' ? 'Abrir o Centro ›' : npc.role === 'ginasio' ? 'Ver o desafio ›' : 'Até mais ›';
     this.dialog.hidden = false;
     this.sync();
     next.focus({ preventScroll: true });
@@ -247,6 +255,9 @@ export class VillageUI {
     if (npc.role === 'loja') this.openShop(npc.name);
     else if (npc.role === 'centro') {
       this.center.open(npc.name);
+      this.sync();
+    } else if (npc.role === 'ginasio') {
+      this.gymPanel.open(this.dialogRegion);
       this.sync();
     } else this.sync();
   }
@@ -375,7 +386,8 @@ export class VillageUI {
         break;
       case 'veil':
         if (ev.target !== el) return;
-        if (this.center.isOpen) this.center.close();
+        if (this.gymPanel.isOpen) this.gymPanel.close();
+        else if (this.center.isOpen) this.center.close();
         else if (!this.shop.hidden) this.closeShop();
         else if (!this.bagPanel.hidden) this.closeBag();
         break;
@@ -416,7 +428,8 @@ export class VillageUI {
     if (key === 'Escape') {
       ev.preventDefault();
       ev.stopImmediatePropagation();
-      if (this.center.isOpen) this.center.close();
+      if (this.gymPanel.isOpen) this.gymPanel.close();
+      else if (this.center.isOpen) this.center.close();
       else if (!this.bagPanel.hidden) this.closeBag();
       else if (!this.shop.hidden) this.closeShop();
       else {

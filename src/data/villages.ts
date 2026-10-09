@@ -1,3 +1,4 @@
+import { GYMS, gymNpc } from './gyms';
 import type { VillageSpec } from '../world/village';
 
 // VILAS DE CADA BIOMA (gerador em src/world/village.ts)
@@ -237,3 +238,6 @@ export const VILLAGES: Record<string, VillageSpec> = {
     ],
   },
 };
+
+// Cada vila tem o líder do ginásio do bioma como último morador (ver src/data/gyms.ts).
+for (const [id, gym] of Object.entries(GYMS)) VILLAGES[id]?.npcs.push(gymNpc(gym));

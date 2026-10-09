@@ -87,7 +87,7 @@ const ui = new GameUI(
 // Moedas, diálogo com moradores, loja e mochila das vilas.
 const village = new VillageUI(
   document.getElementById('ui')!,
-  { onModal: setUiModal, isFullScreen: fullScreenScene, speciesArt: (id) => art(`animal_${id}`, { x: 0, y: 0, w: 64, h: 64 }) },
+  { onModal: setUiModal, isFullScreen: fullScreenScene, speciesArt: (id) => art(`animal_${id}`, { x: 0, y: 0, w: 64, h: 64 }), onGymChallenge: (id) => (game.scene.getScene('Overworld') as OverworldScene).startGym(id) },
   game.events,
 );
 
