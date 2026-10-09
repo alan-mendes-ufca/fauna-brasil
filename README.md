@@ -18,7 +18,7 @@ npm run dev     # servidor de desenvolvimento
 | `npm test` | Testes unitários com Jest e relatório de cobertura (`coverage/`) |
 | `npm run build` | Checagem de tipos e build de produção com Vite |
 
-Os testes ficam ao lado do código (`src/**/*.test.ts`) e cobrem só módulos puros, sem canvas. Importe `describe`, `it` e `expect` de `@jest/globals`. O CI roda em PRs e em pushes para `main`, em dois workflows: `Lint` (`.github/workflows/lint.yml`: ESLint e `tsc --noEmit`) e `Testes` (`.github/workflows/testes.yml`: Jest e build).
+Os testes ficam ao lado do código (`src/**/*.test.ts`) e cobrem só módulos puros, sem canvas. Importe `describe`, `it` e `expect` de `@jest/globals`. O CI roda em PRs e em pushes para `main`, em dois workflows: `Lint` (`.github/workflows/lint.yml`: ESLint e `tsc --noEmit`) e `Tests` (`.github/workflows/tests.yml`: Jest e build).
 
 ### Por que há um `tools/lint`?
 

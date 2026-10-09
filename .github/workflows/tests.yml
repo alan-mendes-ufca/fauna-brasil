@@ -1,4 +1,4 @@
-name: Testes
+name: Tests
 
 on:
   pull_request:
@@ -6,8 +6,8 @@ on:
     branches: [main]
 
 jobs:
-  testes:
-    name: Testes
+  tests:
+    name: Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
