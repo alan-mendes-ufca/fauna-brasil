@@ -1,6 +1,6 @@
 # Fauna Brasil
 
-Jogo de exploração e captura da fauna dos seis biomas brasileiros, feito com Phaser 4, Vite e TypeScript.
+Jogo de exploração e captura da fauna dos seis biomas brasileiros (Amazônia, Caatinga, Cerrado, Pantanal, Mata Atlântica e Pampa), feito com Phaser 4, Vite e TypeScript. Há 72 espécies para encontrar. Toda a arte e a trilha sonora são geradas por código, sem arquivos de imagem ou áudio.
 
 ## O jogo
 
@@ -19,10 +19,65 @@ Os prints são gerados pelos testes de fumaça (`npm run e2e`, em `e2e/prints/`)
 
 ```bash
 npm install     # instala o projeto e, pelo postinstall, o ESLint isolado em tools/lint
-npm run dev     # servidor de desenvolvimento
+npm run dev     # servidor de desenvolvimento (Vite)
 ```
 
+Para gerar o build de produção: `npm run build`. Para ver o resultado: `npm run preview`.
+
+## Controles
+
+| Ação | Como |
+| --- | --- |
+| Andar | Clique no chão |
+| Ir até um animal (e iniciar o encontro) | Clique no animal |
+| Conversar com um morador da vila | Clique nele |
+| Atravessar para outra região | Ande até a saída marcada na borda do mapa |
+| Caderno de espécies | `C` ou `Tab` (fechar: `Esc`; navegar: setas, `PageUp`/`PageDown`) |
+| Mochila | `I` (fora de encontros) |
+| Minimapa | `M` (fechar: `Esc`) |
+| Ligar/desligar o som | `N` |
+| Escolher o inicial | Clique no cartão ou teclas `1` a `3`; `Enter` confirma |
+| Batalha | Clique nos golpes ou teclas `1` a `4`; botões Trocar e Fugir |
+| Captura | Arraste a rede para cima e solte; `Esc` foge |
+| Fechar diálogo, loja ou mochila | `Esc` |
+
+O guia completo está em [docs/jogar.md](docs/jogar.md).
+
+## Parâmetros de URL para desenvolvimento
+
+Os marcados com * valem só no modo de desenvolvimento (`npm run dev`); os demais também funcionam no build.
+
+| Parâmetro | Efeito |
+| --- | --- |
+| `?region=cerrado` | Começa na região indicada (ids: `amazonia`, `caatinga`, `cerrado`, `pantanal`, `mata-atlantica`, `pampa`) |
+| `?at=nome` | Posiciona o jogador num ponto nomeado (`places`) da região |
+| `?capture=onca&habitat=agua` * | Abre a captura direto |
+| `?battle=onca&habitat=agua&lv=6` * | Abre o encontro completo (batalha e captura); sem save usa um time de teste |
+| `?gallery` * | Galeria de tiles e retratos; `?gallery=texto` rola até o primeiro título que contém o texto |
+| `?starter` * | Força a tela de escolha do inicial (sem gravar) |
+| `?nostarter` * | Pula a escolha do inicial |
+| `?demo=caderno` * | Abre o caderno com 5 espécies marcadas, sem gravar |
+| `?fauna=<id>` * | Põe um animal dessa espécie perto do jogador na exploração |
+| `?gym=<regionId>` * | Abre direto o desafio do ginásio da região (ex.: `?gym=cerrado`); sem save usa um time de teste |
+| `?legend=<id>` * | Abre direto a batalha do guardião (ex.: `?legend=boiuna`); sem save usa um time de teste |
+| `?canvas` * | Força o renderizador Canvas |
+
+No console, em desenvolvimento, `__game`, `__ui` e `__village` dão acesso ao jogo e à interface.
+
+## Documentação
+
+- [Guia do jogador](docs/jogar.md)
+- [Arquitetura](docs/arquitetura.md)
+- [Como adicionar conteúdo](docs/conteudo.md) (espécies, biomas, vilas e dados IUCN)
+- [Como contribuir](CONTRIBUTING.md)
+
+## Roadmap
+
+Ginásios (um por bioma, com insígnias) e os guardiões do folclore (um por bioma, despertados por captura) já estão no código: veja [jogar.md](docs/jogar.md#ginásios) e [arquitetura.md](docs/arquitetura.md). A preservação (Centro de Conservação) também já existe; veja o [guia do jogador](docs/jogar.md#centro-de-conservação).
+
 ## Qualidade
+
+Resumo; os detalhes (fluxo de branches, commits e testes) estão em [CONTRIBUTING.md](CONTRIBUTING.md).
 
 | Comando | O que faz |
 | --- | --- |
@@ -36,7 +91,7 @@ Os testes ficam ao lado do código (`src/**/*.test.ts`) e cobrem só módulos pu
 
 ### Testes no navegador (`e2e/`)
 
-Um servidor `vite` em modo de desenvolvimento (porta 5199) sobe sozinho; o Playwright abre as 6 regiões, `?starter`, `?battle`, `?capture`, `?demo=caderno`, a loja e o Centro de Conservação da vila, o minimapa (`M`) e a mochila (`I`). Qualquer `pageerror` ou `console.error` reprova o cenário, e cada print precisa ter muitas cores (um canvas vazio falha). Não há comparação pixel a pixel.
+Um servidor `vite` em modo de desenvolvimento (porta 5199) sobe sozinho; o Playwright abre as 6 regiões, `?starter`, `?battle`, `?gym=amazonia`, `?legend=boiuna`, `?capture`, `?demo=caderno`, a loja e o Centro de Conservação da vila, o minimapa (`M`) e a mochila (`I`). Qualquer `pageerror` ou `console.error` reprova o cenário, e cada print precisa ter muitas cores (um canvas vazio falha). Não há comparação pixel a pixel.
 
 - Sem GPU, o canvas 2D acelerado por SwiftShader tornava a pintura procedural do boot ~15x mais lenta (~70 s) e os prints saíam em branco; por isso o Chromium roda com `--disable-accelerated-2d-canvas` (WebGL continua por software).
 - `PW_CHROMIUM_PATH` aponta para um Chromium já instalado, se o do Playwright não estiver disponível.
