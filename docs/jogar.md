@@ -59,7 +59,7 @@ Animais mais raros são mais difíceis. A rede reforçada (item da loja) aumenta
 
 Cada captura rende moedas (mais para espécies raras; animais grandes rendem 50% a mais). Você começa com 50 moedas.
 
-Cada bioma tem uma vila com moradores e uma loja. Clique no morador da loja para conversar e abrir a vitrine. `I` abre a mochila.
+Cada bioma tem uma vila com moradores, uma loja e uma bióloga do Centro de Conservação (veja a seção abaixo). Clique no morador da loja para conversar e abrir a vitrine. `I` abre a mochila.
 
 | Item | Preço | Efeito |
 | --- | --- | --- |
@@ -69,6 +69,18 @@ Cada bioma tem uma vila com moradores e uma loja. Clique no morador da loja para
 | Isca de frutos | 15 | Por 3 minutos, espécies raras aparecem mais |
 
 As lojas vendem só itens. Animais nunca são comprados nem vendidos: o tráfico de fauna silvestre é um dos maiores problemas de conservação no Brasil, e os moradores comentam isso nas conversas.
+
+## Centro de Conservação
+
+Cada vila tem uma bióloga do Centro de Conservação. Converse com ela e escolha **Abrir o Centro**. O Centro é o mesmo em todas as vilas: DNA, incubadoras, fazenda e reputação são compartilhados.
+
+1. **DNA.** Capturar uma espécie ameaçada rende amostras: 1 para VU e EN, 2 para CR. Espécies LC, NT e NE não rendem DNA. Fugir ou perder a batalha não rende nada.
+2. **Incubar.** Gaste 1 amostra para pôr um ovo numa das 3 incubadoras. O tempo é real: VU leva 2 min, EN 3 min e CR 4 min, e continua contando mesmo com o jogo fechado.
+3. **Recolher.** Quando a barra da incubadora chega ao fim, recolha o filhote para a fazenda, que cabe 6. Se estiver cheia, solte ou troque um filhote antes.
+4. **Soltar.** O filhote vai para a natureza. Você ganha reputação (VU +3, EN +5, CR +8) e cada animal vivo do time ganha XP.
+5. **Trocar.** O filhote vai para um projeto de reintrodução de outra vila. Você ganha metade da reputação, arredondada para cima (VU +2, EN +3, CR +4), moedas (o dobro do valor de captura da raridade, de 20 a 120) e uma cesta de frutas.
+
+A reputação dá um título: Visitante (0), Amigo da fauna (10), Guardião do bioma (25) e Protetor do Brasil (50). Animais silvestres nunca são comprados nem vendidos: o Centro só recebe DNA de capturas e só entrega filhotes à natureza ou a outro projeto.
 
 ## Caderno de espécies
 

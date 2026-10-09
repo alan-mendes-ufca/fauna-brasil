@@ -11,12 +11,12 @@ O jogo roda no navegador com Phaser 4 (cenas e jogo), Vite (build) e TypeScript.
 | `world/` | Lógica da exploração: grade e áreas andáveis (`grid.ts`), caminhos (`pathfind.ts`), sorteio de espécies por habitat (`encounters.ts`), animais soltos no mapa (`fauna.ts`), geração de vilas (`village.ts`) |
 | `capture/` | Regras da captura (`rules.ts`, puras), comportamento do animal (`behavior.ts`) e gesto de arremesso (`throw.ts`) |
 | `battle/` | Motor da batalha (`engine.ts`), fluxo do encontro (`flow.ts`) e utilitários de interface (`ui.ts`) |
-| `state/` | Estado persistente: time e vigor (`party.ts`), moedas e mochila (`bag.ts`) |
-| `ui/` | Interface HTML: caderno (`GameUI.ts`, `dex.ts`), minimapa, vila (diálogo, loja, mochila) e formatação |
+| `state/` | Estado persistente: time e vigor (`party.ts`), moedas e mochila (`bag.ts`) e o Centro de Conservação (`conservation.ts`: DNA, incubadoras, fazenda e reputação) |
+| `ui/` | Interface HTML: caderno (`GameUI.ts`, `dex.ts`), minimapa, vila (diálogo, loja, mochila) e formatação; o painel do Centro de Conservação fica em `conservation.ts` |
 | `art/` | Arte procedural (veja abaixo) |
 | `audio/` | Trilha sintetizada (`music.ts`, `synth.ts`) |
 | `biomes/` | Um bioma por pasta (Cerrado, Pantanal, Mata Atlântica, Pampa), mais o contrato em `types.ts` e os registros `env.ts` e `fauna.ts` |
-| `data/` | Dados: espécies (`species.ts`), batalha (`battle.ts`), itens (`items.ts`), vilas (`villages.ts`), biomas (`biomes.ts`), tipos (`types.ts`) e regiões (`regions/`) |
+| `data/` | Dados: espécies (`species.ts`), batalha (`battle.ts`), itens (`items.ts`), vilas (`villages.ts`), biomas (`biomes.ts`), tipos (`types.ts`), regiões (`regions/`) e regras do Centro de Conservação (`conservation.ts`, funções puras) |
 
 Amazônia e Caatinga são anteriores ao contrato `src/biomes/`: suas espécies estão em `src/data/species.ts` e suas regiões em `src/data/regions/`. Os outros quatro biomas seguem o contrato descrito em `src/biomes/types.ts`.
 
@@ -53,8 +53,9 @@ flowchart TD
 | `encounter-start` | `beginEncounter` | `{ speciesId, habitat, level }` | `GameUI` (marca como vista) |
 | `battle-done` | `BattleScene` | `{ speciesId, result }` | `battle/flow.ts` (interno) |
 | `capture-done` | `CaptureScene` | `{ speciesId, result }` | `battle/flow.ts` e `GameUI` |
-| `encounter-end` | `battle/flow.ts` | `{ speciesId, habitat, level, result }` | `OverworldScene`, `party`, `bag` |
+| `encounter-end` | `battle/flow.ts` | `{ speciesId, habitat, level, result }` | `OverworldScene`, `party`, `bag`, `conservation` |
 | `coins-earned` | `bindBag` | `{ amount }` | `ui/village.ts` |
+| `dna-collected` | `bindConservation` (`state/conservation.ts`) | `{ speciesId, amount }` | `GameUI` (`onDna`) |
 
 `encounter-end` é emitido exatamente uma vez por encontro, com `result` igual a `captured`, `fled`, `ran` ou `lost`. O contrato completo está no comentário de `src/battle/flow.ts`.
 
@@ -67,6 +68,7 @@ Tudo fica em `localStorage`. Sem ele o jogo funciona, só não lembra. Cada leit
 | `fauna-brasil:party:v1` | `src/state/party.ts` | Coleção (`members`), time (`team`) e último tick de vigor |
 | `fauna-brasil:mochila:v1` | `src/state/bag.ts` | Moedas, itens, uso da rede reforçada e fim da isca |
 | `fauna-brasil:caderno:v1` | `src/ui/GameUI.ts` | Espécies capturadas e vistas e dica de primeiro uso |
+| `fauna-brasil:conservacao:v1` | `src/state/conservation.ts` | DNA por espécie (`dna`), incubadoras (`slots`), fazenda de filhotes (`farm`) e reputação |
 
 A trilha guarda a escolha de som numa chave própria (`fauna-brasil:mudo`, em `src/audio/music.ts`). Ao mudar o formato de um save, aumente o sufixo `:v1` e trate o save antigo.
 
@@ -87,4 +89,4 @@ Os quatro biomas novos registram sua arte em `src/biomes/env.ts` (ambiente) e `s
 
 ## Testes
 
-Ficam em `src/**/*.test.ts` e cobrem módulos puros (`capture/rules`, `battle/engine`, `state/bag`, `world/village`, `world/encounters`). Veja [CONTRIBUTING.md](../CONTRIBUTING.md#testes).
+Ficam em `src/**/*.test.ts` e cobrem módulos puros (`capture/rules`, `battle/engine`, `state/bag`, `world/village`, `world/encounters`) e o estado do Centro de Conservação (`state/conservation`, com `state/integration` para o fluxo de captura, DNA e incubadoras). Veja [CONTRIBUTING.md](../CONTRIBUTING.md#testes).

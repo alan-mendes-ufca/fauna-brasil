@@ -62,7 +62,7 @@ No console, em desenvolvimento, `__game`, `__ui` e `__village` dão acesso ao jo
 
 ## Roadmap
 
-Ainda não existem, e estão em issues abertas: preservação (#2), ginásios (#3) e chefes (#4).
+Ainda não existem, e estão em issues abertas: ginásios (#3) e chefes (#4). A preservação (Centro de Conservação) já está na main; veja o [guia do jogador](docs/jogar.md#centro-de-conservação).
 
 ## Qualidade
 
