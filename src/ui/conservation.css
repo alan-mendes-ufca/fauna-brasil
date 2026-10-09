@@ -1,0 +1,96 @@
+/* Painel do Centro de Conservação (reaproveita .vl-paper, .vl-row, .vl-btn do village.css). */
+
+.cv-panel {
+  width: min(640px, calc(100vw / var(--s) - 32px));
+}
+
+.cv-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.cv-rep {
+  margin: 0 0 6px;
+  font: 400 16px/1.3 var(--pixel);
+  color: var(--ink-brown);
+}
+
+.cv-h {
+  margin: 10px 0 2px;
+  font: 600 14px/1 var(--pixel);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--moss);
+}
+
+.cv-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cv-empty {
+  padding: 6px 0;
+  font: 400 13px/1.3 var(--pixel);
+  color: #5a4426;
+}
+
+.cv-pic {
+  object-fit: contain;
+}
+
+.cv-slot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px dashed rgba(90, 60, 25, 0.4);
+}
+
+.cv-slot:last-child {
+  border-bottom: 0;
+}
+
+.cv-n {
+  flex: none;
+  width: 22px;
+  font: 600 16px/1 var(--pixel);
+  color: var(--moss);
+  text-align: center;
+}
+
+.cv-free {
+  opacity: 0.7;
+}
+
+.cv-bar {
+  height: 10px;
+  background: rgba(90, 60, 25, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(90, 60, 25, 0.5);
+}
+
+.cv-fill {
+  display: block;
+  height: 100%;
+  background: var(--leaf);
+}
+
+.cv-time {
+  flex: none;
+  min-width: 5ch;
+  font: 600 15px/1 var(--pixel);
+  color: var(--ink-brown);
+  text-align: right;
+}
+
+#ui .vl-btn.cv-alt {
+  background: #cfe0a8;
+  box-shadow:
+    inset 0 -3px 0 #98b070,
+    0 -2px 0 #1a1000,
+    0 2px 0 #1a1000,
+    -2px 0 0 #1a1000,
+    2px 0 0 #1a1000;
+}

@@ -91,7 +91,7 @@ describe('withVillage', () => {
   });
 
   it('recusa moradores demais', () => {
-    const spec = { ...VILLAGES.amazonia, npcs: Array.from({ length: 5 }, (_, i) => ({ ...VILLAGES.amazonia.npcs[0], id: `n${i}` })) };
+    const spec = { ...VILLAGES.amazonia, npcs: Array.from({ length: 6 }, (_, i) => ({ ...VILLAGES.amazonia.npcs[0], id: `n${i}` })) };
     expect(() => withVillage(getRegion('amazonia'), spec)).toThrow(/no máximo/);
   });
 });

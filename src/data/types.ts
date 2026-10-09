@@ -37,15 +37,15 @@ export interface RegionExit extends TilePos {
 }
 
 /** Aparência de um morador (cores do spritesheet `npc_<look>`, em src/art/npc.ts). */
-export type NpcLook = 'vendedora' | 'pescador' | 'agricultora' | 'idoso' | 'menina' | 'guarda';
+export type NpcLook = 'vendedora' | 'pescador' | 'agricultora' | 'idoso' | 'menina' | 'guarda' | 'biologa';
 
 /** Morador de uma vila. Ocupa (bloqueia) o próprio tile; o jogador conversa com ele ao clicar. */
 export interface NpcDef extends TilePos {
   id: string;
   name: string;
   look: NpcLook;
-  /** 'loja' abre a loja depois da fala. */
-  role: 'loja' | 'morador';
+  /** 'loja' abre a loja depois da fala; 'centro' abre o Centro de Conservação. */
+  role: 'loja' | 'centro' | 'morador';
   /** Falas, uma por conversa (em sequência, recomeçando no fim). */
   lines: string[];
   facing?: 'down' | 'up' | 'side';
