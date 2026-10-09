@@ -1,3 +1,6 @@
 node_modules
 dist
 coverage
+e2e/prints/
+e2e/resultados/
+e2e/relatorio/
