@@ -82,7 +82,7 @@ test('?legend=boiuna abre a batalha do guardião', async ({ page }) => {
   await esperarBatalhaPronta(page);
   await expect(page.locator('.bt-note')).toContainText('Guardião do folclore');
   await expect(page.locator('.bt-wild .bt-pname')).toHaveText('Boiúna');
-  await expect(page.locator('.bt-run')).toHaveCount(0);
+  await expect(page.locator('.bt-run')).toHaveCount(1);
   await assentar(page, 1500);
   await imprimir(page, 'batalha-guardiao');
 });

@@ -91,7 +91,7 @@ Cada bioma também abriga um guardião das lendas brasileiras. Ele dorme até vo
 | Comadre Fulozinha | Caatinga | tatu-bola, veado-catingueiro |
 | Boitatá | Pampa | veado-campeiro, tatu-mulita |
 
-- **Batalha em fases:** o guardião tem mais vigor que um animal comum (de 2 a 3,5 vezes o vigor do corpo dele). Ao perder vigor, ele passa de fase, com uma fala e uma mudança de mecânica. Não há captura nem fuga.
+- **Batalha em fases:** o guardião tem mais vigor que um animal comum (de 2 a 3,5 vezes o vigor do corpo dele). Ao perder vigor, ele passa de fase, com uma fala e uma mudança de mecânica. Não há captura, mas a fuga sempre funciona: o guardião volta a dormir e desperta de novo na próxima captura de uma espécie gatilho.
 - **Derrota:** se o time cair, o guardião volta a dormir. Nada é marcado, e uma nova captura do gatilho o acorda de novo.
 - **Vitória:** o guardião é vencido uma vez só. Você ganha moedas, XP para o time, um título e, em alguns casos, itens. Revanches não pagam de novo.
 
